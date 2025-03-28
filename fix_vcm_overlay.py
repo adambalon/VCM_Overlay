@@ -11,7 +11,7 @@ import traceback
 from ctypes import wintypes
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QLabel, QPushButton, QTextEdit, QTabWidget, QLineEdit, 
-                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip)
+                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy)
 from PyQt5.QtCore import QTimer, Qt, QEvent, QRect
 from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QBrush, QTextCursor
 
@@ -103,8 +103,11 @@ class VCMOverlay(QMainWindow):
     def initUI(self):
         """Initialize the main UI"""
         self.setWindowTitle("VCM Parameter Monitor")
-        self.setGeometry(100, 100, 400, 220)  # Slightly larger default size
-        self.setMinimumSize(300, 200)  # Set minimum size
+        
+        # Position in top right of screen - calculate position based on screen size
+        screen_geometry = QApplication.desktop().availableGeometry()
+        self.setGeometry(screen_geometry.width() - 520, 20, 500, 450)  # Increased height to 450
+        self.setMinimumSize(400, 350)  # Increased minimum height to 350
         
         # Create an inner container with rounded corners
         self.setStyleSheet("""
@@ -237,7 +240,7 @@ class VCMOverlay(QMainWindow):
         """)
         param_layout = QVBoxLayout(param_group)
         param_layout.setContentsMargins(10, 10, 10, 10)
-        param_layout.setSpacing(8)
+        param_layout.setSpacing(3)  # Reduced spacing for tighter packing
         
         # Parameter header display
         param_header_container = QWidget()
@@ -250,7 +253,7 @@ class VCMOverlay(QMainWindow):
             }
         """)
         param_header_layout = QHBoxLayout(param_header_container)
-        param_header_layout.setContentsMargins(8, 5, 8, 5)
+        param_header_layout.setContentsMargins(8, 3, 8, 3)  # Reduced vertical padding
         
         self.parameter_header_label = QLabel("NO PARAMETER DETECTED")
         self.parameter_header_label.setAlignment(Qt.AlignCenter)
@@ -300,42 +303,60 @@ class VCMOverlay(QMainWindow):
         """)
         
         param_details_layout = QGridLayout(details_container)
-        param_details_layout.setVerticalSpacing(6)
+        param_details_layout.setVerticalSpacing(3)  # Reduced spacing for tighter packing
         param_details_layout.setHorizontalSpacing(10)
-        param_details_layout.setContentsMargins(5, 5, 5, 5)
+        param_details_layout.setContentsMargins(5, 5, 5, 5)  # Reduced margins
         param_details_layout.setColumnStretch(1, 1)
         
         # Add labels for parameter fields with simplified styling
-        label_style = "color: #777777; font-size: 8.5pt; font-weight: bold;"
-        value_style = "font-size: 9pt; color: #CCCCCC;"
+        label_style = "color: #777777; font-size: 9pt; font-weight: bold;"
+        value_style = "font-size: 9.5pt; color: #CCCCCC;"
         
-        param_details_layout.addWidget(QLabel("TYPE:"), 0, 0)
+        # Reposition all labels to the top by changing the row order
+        row = 0  # Start from row 0
+        
+        param_details_layout.addWidget(QLabel("TYPE:"), row, 0)
         self.param_type_label = QLabel("")
         self.param_type_label.setStyleSheet(f"{value_style}")
-        param_details_layout.addWidget(self.param_type_label, 0, 1)
+        param_details_layout.addWidget(self.param_type_label, row, 1)
+        row += 1
         
-        param_details_layout.addWidget(QLabel("ID:"), 1, 0)
+        param_details_layout.addWidget(QLabel("ID:"), row, 0)
         self.param_id_label = QLabel("")
         self.param_id_label.setStyleSheet(f"{value_style}")
-        param_details_layout.addWidget(self.param_id_label, 1, 1)
+        param_details_layout.addWidget(self.param_id_label, row, 1)
+        row += 1
         
-        param_details_layout.addWidget(QLabel("NAME:"), 2, 0)
+        param_details_layout.addWidget(QLabel("NAME:"), row, 0)
         self.param_name_label = QLabel("")
         self.param_name_label.setStyleSheet(f"{value_style}")
         self.param_name_label.setWordWrap(True)  # Enable word wrap
-        param_details_layout.addWidget(self.param_name_label, 2, 1)
+        self.param_name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        param_details_layout.addWidget(self.param_name_label, row, 1)
+        row += 1
         
-        param_details_layout.addWidget(QLabel("DESC:"), 3, 0)
+        param_details_layout.addWidget(QLabel("DESC:"), row, 0)
         self.param_desc_label = QLabel("")
         self.param_desc_label.setStyleSheet(f"{value_style}")
         self.param_desc_label.setWordWrap(True)  # Enable word wrap
-        param_details_layout.addWidget(self.param_desc_label, 3, 1)
+        self.param_desc_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.param_desc_label.setMinimumHeight(30)  # Set minimum height for description
+        param_details_layout.addWidget(self.param_desc_label, row, 1)
+        row += 1
         
-        param_details_layout.addWidget(QLabel("DETAILS:"), 4, 0)
+        param_details_layout.addWidget(QLabel("DETAILS:"), row, 0)
         self.param_details_label = QLabel("")
         self.param_details_label.setStyleSheet(f"{value_style}")
         self.param_details_label.setWordWrap(True)  # Enable word wrap
-        param_details_layout.addWidget(self.param_details_label, 4, 1)
+        # Make the details field expand to fit content rather than being clipped
+        self.param_details_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.param_details_label.setMinimumHeight(60)  # Set minimum height to ensure visibility
+        param_details_layout.addWidget(self.param_details_label, row, 1)
+        
+        # Set row stretch to give more space to the larger fields
+        param_details_layout.setRowStretch(2, 1)  # NAME
+        param_details_layout.setRowStretch(3, 2)  # DESC
+        param_details_layout.setRowStretch(4, 3)  # DETAILS
         
         # Style the label columns
         for i in range(param_details_layout.rowCount()):
@@ -344,10 +365,13 @@ class VCMOverlay(QMainWindow):
                 label_item.widget().setStyleSheet(label_style)
                 label_item.widget().setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         
-        scroll_area.setWidget(details_container)
-        param_layout.addWidget(scroll_area)
+        # Instead of using a scroll area with fixed size, directly add the details container
+        # to allow it to expand with the content
+        param_layout.addWidget(details_container)
         
-        content_layout.addWidget(param_group, 1)  # Give this stretch factor for resizing
+        # Add a stretcher below the param_group to push everything to the top
+        content_layout.addWidget(param_group, 0)  # Change stretch factor to 0
+        content_layout.addStretch(1)  # Add a stretch below to push everything up
         
         # Button row with rounded style
         button_container = QWidget()
@@ -499,7 +523,7 @@ class VCMOverlay(QMainWindow):
         header_part = text.split()[0] if text.split() else ""
         self.parameter_header_label.setText(header_part)
         
-        # Clear all labels
+        # Clear all labels but set a fixed height to prevent layout shifts
         self.param_type_label.setText("")
         self.param_id_label.setText("")
         self.param_name_label.setText("")
