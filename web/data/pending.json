@@ -1,0 +1,24 @@
+{
+  "submissions": [
+    {
+      "id": "submission-001",
+      "timestamp": "2024-03-21T12:00:00Z",
+      "type": "ecm",
+      "param_id": "12345",
+      "name": "Example ECM Parameter - Updated",
+      "description": "Updated parameter description",
+      "details": "This is a sample update to the parameter details.\n\nIt includes multiple lines of information that would be useful for understanding the parameter.",
+      "status": "pending"
+    },
+    {
+      "id": "submission-002",
+      "timestamp": "2024-03-21T14:30:00Z",
+      "type": "tcm",
+      "param_id": "56789",
+      "name": "Example TCM Parameter - Updated",
+      "description": "Updated TCM parameter description",
+      "details": "Updated details for the TCM parameter with new technical information.",
+      "status": "pending"
+    }
+  ]
+} 

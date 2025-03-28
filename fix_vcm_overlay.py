@@ -9,7 +9,6 @@ import sys
 import ctypes
 import traceback
 import json
-import subprocess
 import re
 from ctypes import wintypes
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -18,6 +17,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 from PyQt5.QtCore import QTimer, Qt, QEvent, QRect
 from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QBrush, QTextCursor
 import datetime
+
+# Import our parameter manager module
+import param_manager
 
 # Windows API constants and helper functions
 user32 = ctypes.WinDLL('user32', use_last_error=True)
@@ -382,48 +384,43 @@ class VCMOverlay(QMainWindow):
         self.param_details_text.setMinimumHeight(200)  # Make it quite tall
         details_field_layout.addWidget(self.param_details_text)
         
-        # Git operations button container
-        git_button_container = QWidget()
-        git_button_layout = QHBoxLayout(git_button_container)
-        git_button_layout.setContentsMargins(0, 5, 0, 0)
-        git_button_layout.setSpacing(5)
+        # Operation buttons container
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 5, 0, 0)
+        button_layout.setSpacing(5)
         
-        # Add buttons for Git operations
-        self.git_save_button = QPushButton("SAVE DETAILS")
-        self.git_save_button.clicked.connect(self.save_parameter_details)
-        self.git_save_button.setToolTip("Save parameter details to local JSON file")
-        git_button_layout.addWidget(self.git_save_button)
+        # Add buttons for parameter operations
+        self.save_button = QPushButton("SAVE DETAILS")
+        self.save_button.clicked.connect(self.save_parameter_details)
+        self.save_button.setToolTip("Save parameter details to local JSON file")
+        button_layout.addWidget(self.save_button)
         
-        self.git_pull_button = QPushButton("GIT PULL")
-        self.git_pull_button.clicked.connect(self.git_pull_changes)
-        self.git_pull_button.setToolTip("Pull latest changes from the Git repository")
-        git_button_layout.addWidget(self.git_pull_button)
-        
-        self.git_push_button = QPushButton("GIT PUSH")
-        self.git_push_button.clicked.connect(self.git_push_changes)
-        self.git_push_button.setToolTip("Push your changes to the Git repository")
-        git_button_layout.addWidget(self.git_push_button)
+        self.submit_button = QPushButton("SUBMIT CHANGES")
+        self.submit_button.clicked.connect(self.submit_parameter_changes)
+        self.submit_button.setToolTip("Submit your changes for review")
+        button_layout.addWidget(self.submit_button)
         
         # Second row of buttons
-        git_button_container2 = QWidget()
-        git_button_layout2 = QHBoxLayout(git_button_container2)
-        git_button_layout2.setContentsMargins(0, 5, 0, 0)
-        git_button_layout2.setSpacing(5)
+        button_container2 = QWidget()
+        button_layout2 = QHBoxLayout(button_container2)
+        button_layout2.setContentsMargins(0, 5, 0, 0)
+        button_layout2.setSpacing(5)
         
         self.refresh_param_button = QPushButton("REFRESH PARAMETER")
         self.refresh_param_button.clicked.connect(self.refresh_current_parameter)
-        self.refresh_param_button.setToolTip("Pull data for current parameter from remote repository")
-        git_button_layout2.addWidget(self.refresh_param_button)
+        self.refresh_param_button.setToolTip("Refresh parameter data from local files")
+        button_layout2.addWidget(self.refresh_param_button)
         
-        details_field_layout.addWidget(git_button_container)
-        details_field_layout.addWidget(git_button_container2)
+        details_field_layout.addWidget(button_container)
+        details_field_layout.addWidget(button_container2)
         
-        # Status message for Git operations
-        self.git_status_label = QLabel("")
-        self.git_status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
-        self.git_status_label.setWordWrap(True)
-        self.git_status_label.setAlignment(Qt.AlignLeft)
-        details_field_layout.addWidget(self.git_status_label)
+        # Status message for operations
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
+        self.status_label.setWordWrap(True)
+        self.status_label.setAlignment(Qt.AlignLeft)
+        details_field_layout.addWidget(self.status_label)
         
         # Add the details field container to the content layout
         content_layout.addWidget(param_group, 1)  # Give parameter group a stretch factor of 1
@@ -587,7 +584,7 @@ class VCMOverlay(QMainWindow):
         # self.param_value_label.setText("")  # Keep this to avoid breaking code but field is hidden
         self.param_desc_label.setText("")
         self.param_details_text.clear()  # Clear the details text box
-        self.git_status_label.setText("")  # Clear git status message
+        self.status_label.setText("PARAMETER DETECTED")
         
         # Extract specific parts
         try:
@@ -599,7 +596,7 @@ class VCMOverlay(QMainWindow):
             parts = text.split(None, 2)  # Split at most twice to get: ['[ECM]', '12600', '- Main Spark vs...']
             
             # Get ECM type for the JSON file
-            ecm_type = get_ecm_type_from_text(text)
+            ecm_type = param_manager.get_ecm_type_from_text(text)
             
             # Extract ID (number after type)
             param_id = None
@@ -647,7 +644,7 @@ class VCMOverlay(QMainWindow):
             # and try to get details from the JSON file (but don't automatically pull)
             if ecm_type and param_id:
                 # Get the parameter data from the JSON file without Git operations
-                param_data, stored_details = get_parameter_details_from_json(param_id, ecm_type)
+                param_data, stored_details = param_manager.get_parameter_details(param_id, ecm_type)
                 
                 if param_data:
                     # Update the UI with the stored parameter data
@@ -689,10 +686,10 @@ Details: {self.param_details_text.toPlainText()}"""
     def try_add_parameter_to_json(self, param_id, param_name, ecm_type):
         """Attempt to add the parameter to the JSON file if it doesn't exist"""
         try:
-            success, message = add_parameter_to_json(param_id, param_name, ecm_type)
+            success, message = param_manager.add_parameter(param_id, param_name, ecm_type)
             if success:
                 self.log_debug(f"Added new parameter: {message}")
-                self.git_status_label.setText(f"✓ {message}")
+                self.status_label.setText(f"✓ {message}")
             else:
                 # Not a failure, just means parameter already exists or something minor
                 self.log_debug(f"Parameter not added: {message}")
@@ -704,68 +701,49 @@ Details: {self.param_details_text.toPlainText()}"""
         # Get current parameter information
         param_id = self.param_id_label.text().strip()
         param_details = self.param_details_text.toPlainText().strip()
-        ecm_type = get_ecm_type_from_text(self.last_parameter_text)
+        ecm_type = param_manager.get_ecm_type_from_text(self.last_parameter_text)
         
         if not param_id or not ecm_type:
-            self.git_status_label.setText("❌ Cannot save: Missing parameter ID or ECM type")
+            self.status_label.setText("❌ Cannot save: Missing parameter ID or ECM type")
             return
         
         try:
-            success, message = update_parameter_details(param_id, param_details, ecm_type)
+            success, message = param_manager.update_parameter_details(param_id, param_details, ecm_type)
             if success:
                 self.log_debug(f"Updated parameter details: {message}")
-                self.git_status_label.setText(f"✓ {message}")
-                
-                # Try to commit the changes
-                if ecm_type == "TCM":
-                    file_path = os.path.join("vcm_descriptions", "ecmt.json")
-                else:
-                    file_path = os.path.join("vcm_descriptions", "ECM", f"{ecm_type}.json")
-                    
-                git_success, git_message = git_add_and_commit(
-                    file_path, 
-                    f"Update details for parameter {param_id} in {ecm_type}"
-                )
-                
-                if git_success:
-                    self.git_status_label.setText(f"✓ {message} - Committed to Git")
-                else:
-                    self.git_status_label.setText(f"✓ {message} - ❌ Git commit failed: {git_message}")
+                self.status_label.setText(f"✓ {message}")
             else:
-                self.git_status_label.setText(f"❌ {message}")
+                self.status_label.setText(f"❌ {message}")
         except Exception as e:
             self.log_debug(f"Error saving parameter details: {str(e)}")
-            self.git_status_label.setText(f"❌ Error: {str(e)}")
+            self.status_label.setText(f"❌ Error: {str(e)}")
     
-    def git_pull_changes(self):
-        """Pull latest changes from the Git repository"""
-        self.git_status_label.setText("⟳ Pulling changes from Git repository...")
+    def submit_parameter_changes(self):
+        """Submit parameter changes for review"""
+        # Get current parameter information
+        param_id = self.param_id_label.text().strip()
+        param_name = self.param_name_label.text().strip()
+        param_details = self.param_details_text.toPlainText().strip()
+        ecm_type = param_manager.get_ecm_type_from_text(self.last_parameter_text)
+        
+        if not param_id or not ecm_type:
+            self.status_label.setText("❌ Cannot submit: Missing parameter ID or ECM type")
+            return
+        
+        self.status_label.setText("⟳ Submitting changes for review...")
+        
         try:
-            success, message = git_pull()
+            # Use the parameter manager to submit changes
+            success, message = param_manager.submit_parameter_changes(param_id, param_name, ecm_type, param_details)
+            
             if success:
-                self.log_debug("Git pull successful")
-                self.git_status_label.setText(f"✓ Git pull successful")
+                self.log_debug(f"Parameter changes submitted: {message}")
+                self.status_label.setText(f"✓ {message}")
             else:
-                self.log_debug(f"Git pull failed: {message}")
-                self.git_status_label.setText(f"❌ {message}")
+                self.status_label.setText(f"❌ {message}")
         except Exception as e:
-            self.log_debug(f"Error in git pull: {str(e)}")
-            self.git_status_label.setText(f"❌ Error: {str(e)}")
-    
-    def git_push_changes(self):
-        """Push changes to the Git repository"""
-        self.git_status_label.setText("⟳ Pushing changes to Git repository...")
-        try:
-            success, message = git_push()
-            if success:
-                self.log_debug("Git push successful")
-                self.git_status_label.setText(f"✓ Git push successful")
-            else:
-                self.log_debug(f"Git push failed: {message}")
-                self.git_status_label.setText(f"❌ {message}")
-        except Exception as e:
-            self.log_debug(f"Error in git push: {str(e)}")
-            self.git_status_label.setText(f"❌ Error: {str(e)}")
+            self.log_debug(f"Error submitting parameter changes: {str(e)}")
+            self.status_label.setText(f"❌ Error: {str(e)}")
     
     def update_handle_number(self, handle_num):
         """Update the parameter edit control handle number"""
@@ -1485,26 +1463,19 @@ Details: {self.param_details_text.toPlainText()}"""
             event.accept()
 
     def refresh_current_parameter(self):
-        """Refresh the current parameter data from the repository"""
+        """Refresh the current parameter data from local files"""
         param_id = self.param_id_label.text().strip()
-        ecm_type = get_ecm_type_from_text(self.last_parameter_text)
+        ecm_type = param_manager.get_ecm_type_from_text(self.last_parameter_text)
         
         if not param_id or not ecm_type:
-            self.git_status_label.setText("❌ Cannot refresh: Missing parameter ID or ECM type")
+            self.status_label.setText("❌ Cannot refresh: Missing parameter ID or ECM type")
             return
         
-        self.git_status_label.setText("⟳ Pulling latest parameter data...")
+        self.status_label.setText("⟳ Loading parameter data...")
         
         try:
-            # First pull latest changes from the repository
-            pull_success, pull_message = git_pull()
-            if not pull_success:
-                self.log_debug(f"Git pull failed during refresh: {pull_message}")
-                self.git_status_label.setText(f"❌ Pull failed: {pull_message}")
-                return
-                
-            # Now load the parameter data from the updated file
-            param_data, stored_details = get_parameter_details_from_json(param_id, ecm_type)
+            # Get parameter details from the JSON file
+            param_data, stored_details = param_manager.get_parameter_details(param_id, ecm_type)
             
             if param_data:
                 # Update the UI with the stored parameter data
@@ -1521,420 +1492,17 @@ Details: {self.param_details_text.toPlainText()}"""
                 if stored_details:
                     self.param_details_text.setText(stored_details)
                     self.log_debug(f"Refreshed parameter details for {param_id}")
-                    self.git_status_label.setText(f"✓ Parameter data refreshed")
+                    self.status_label.setText(f"✓ Parameter data refreshed")
                 else:
                     # Don't generate details text, leave it empty
                     self.param_details_text.clear()
-                    self.git_status_label.setText(f"✓ Parameter refreshed, no details found")
+                    self.status_label.setText(f"✓ Parameter refreshed, no details found")
             else:
-                self.git_status_label.setText(f"❌ Parameter {param_id} not found in remote data")
+                self.status_label.setText(f"❌ Parameter {param_id} not found in local data")
                 
         except Exception as e:
             self.log_debug(f"Error refreshing parameter: {str(e)}")
-            self.git_status_label.setText(f"❌ Error: {str(e)}")
-
-# JSON and Git Operations Functions
-def get_ecm_type_from_text(parameter_text):
-    """Extract the ECM type from the parameter text"""
-    if not parameter_text:
-        return None
-    
-    # Parse the ECM type from the parameter text
-    # Format usually is [ECM] or [TCM] or [E38] etc.
-    parts = parameter_text.split()
-    if not parts:
-        return None
-    
-    header = parts[0].strip("[]")
-    
-    # Handle TCM specifically
-    if header == "TCM":
-        return "TCM"
-    
-    # Extract ECM type
-    if header == "ECM":
-        # Look for E## in the text
-        import re
-        ecm_match = re.search(r'\b(E\d+)\b', parameter_text)
-        if ecm_match:
-            return ecm_match.group(1)
-        return "E38"  # Default to E38 if not specified
-    
-    # If it's already a specific ECM type like E38, E92, etc.
-    if header.startswith("E") and len(header) <= 4:
-        return header
-    
-    return None
-
-def load_parameter_file(ecm_type):
-    """Load the JSON file for the specified ECM type"""
-    if not ecm_type:
-        return None, "No ECM type specified"
-    
-    try:
-        if ecm_type == "TCM":
-            file_path = os.path.join("vcm_descriptions", "ecmt.json")
-        else:
-            file_path = os.path.join("vcm_descriptions", "ECM", f"{ecm_type}.json")
-        
-        # Create the directory if it doesn't exist
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        # Check if the file exists
-        if not os.path.exists(file_path):
-            # Create a new file with proper structure
-            new_data = {
-                "name": ecm_type,
-                "description": f"{ecm_type} Engine Control Module",
-                "parameters": {}
-            }
-            with open(file_path, 'w') as f:
-                json.dump(new_data, f, indent=2)
-            return new_data, f"Created new file {file_path}"
-        
-        # Load the existing file
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-            
-            # Ensure proper structure exists (some files might be inconsistent)
-            if "parameters" not in data:
-                data["parameters"] = {}
-            
-            # Count parameters (both in parameters section and directly at root)
-            param_count = len(data.get("parameters", {}))
-            for key in data:
-                if key not in ["name", "description", "parameters"] and isinstance(data[key], dict):
-                    param_count += 1
-            
-            return data, f"Loaded {param_count} parameters from {file_path}"
-    
-    except json.JSONDecodeError:
-        # If the file exists but is not valid JSON, initialize it
-        new_data = {
-            "name": ecm_type,
-            "description": f"{ecm_type} Engine Control Module",
-            "parameters": {}
-        }
-        with open(file_path, 'w') as f:
-            json.dump(new_data, f, indent=2)
-        return new_data, f"Initialized empty JSON file {file_path}"
-    
-    except Exception as e:
-        return None, f"Error loading parameter file: {str(e)}"
-
-def save_parameter_file(ecm_type, data):
-    """Save the parameter data to the JSON file"""
-    if not ecm_type:
-        return False, "No ECM type specified"
-    
-    try:
-        if ecm_type == "TCM":
-            file_path = os.path.join("vcm_descriptions", "ecmt.json")
-        else:
-            file_path = os.path.join("vcm_descriptions", "ECM", f"{ecm_type}.json")
-        
-        # Create the directory if it doesn't exist
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        # Format the JSON with indentation and sort keys for consistency
-        with open(file_path, 'w') as f:
-            json.dump(data, f, indent=2, sort_keys=True)
-        
-        return True, f"Saved {len(data)} parameters to {file_path}"
-    
-    except Exception as e:
-        return False, f"Error saving parameter file: {str(e)}"
-
-def add_parameter_to_json(param_id, param_name, ecm_type):
-    """Add a parameter to the JSON file if it doesn't exist"""
-    if not param_id or not param_name or not ecm_type:
-        return False, "Missing parameter information"
-    
-    # Load the existing parameter file
-    data, message = load_parameter_file(ecm_type)
-    if data is None:
-        return False, message
-    
-    # Check if the parameter already exists in the parameters section
-    if "parameters" in data and param_id in data["parameters"]:
-        return False, f"Parameter {param_id} already exists in {ecm_type}"
-    
-    # Also check for parameters directly at the root level (file inconsistency)
-    if param_id in data and param_id != "name" and param_id != "description" and param_id != "parameters":
-        return False, f"Parameter {param_id} already exists at root level in {ecm_type}"
-    
-    # Add the parameter with minimal information to the parameters section
-    if "parameters" not in data:
-        data["parameters"] = {}
-    
-    data["parameters"][param_id] = {
-        "name": param_name,
-        "description": ""
-        # No details field by default - allowing for manual entry only
-    }
-    
-    # Save the updated file
-    success, save_message = save_parameter_file(ecm_type, data)
-    if success:
-        return True, f"Added parameter {param_id} to {ecm_type}"
-    else:
-        return False, save_message
-
-def update_parameter_details(param_id, details, ecm_type):
-    """Update the details for an existing parameter"""
-    if not param_id or not ecm_type:
-        return False, "Missing parameter information"
-    
-    # Load the existing parameter file
-    data, message = load_parameter_file(ecm_type)
-    if data is None:
-        return False, message
-    
-    # Parse details from the text box format
-    description = ""
-    name = ""
-    
-    # Try to extract description and name from the details text
-    lines = details.split('\n')
-    for i, line in enumerate(lines):
-        if line.startswith("Description:"):
-            # Get the description (which might span multiple lines)
-            desc_start = i
-            desc_text = line[len("Description:"):].strip()
-            
-            # Collect additional lines until we hit another field or empty line
-            for j in range(i+1, len(lines)):
-                if not lines[j].strip() or lines[j].startswith("Full Text:"):
-                    break
-                desc_text += " " + lines[j].strip()
-            
-            description = desc_text
-        elif line.startswith("Name:"):
-            name = line[len("Name:"):].strip()
-        elif line.startswith("Parameter ID:"):
-            # Just in case the ID is different in the details
-            id_text = line[len("Parameter ID:"):].strip()
-            if id_text and id_text != param_id:
-                param_id = id_text
-    
-    # Look for parameter in parameters section first
-    if "parameters" in data and param_id in data["parameters"]:
-        # Use existing name if not found in details
-        if not name:
-            name = data["parameters"][param_id].get("name", "")
-        
-        # Update the parameter
-        data["parameters"][param_id]["description"] = description
-        data["parameters"][param_id]["name"] = name
-        data["parameters"][param_id]["details"] = details
-    # Check if parameter exists at root level (file inconsistency)
-    elif param_id in data and param_id != "name" and param_id != "description" and param_id != "parameters":
-        # Use existing name if not found in details
-        if not name:
-            name = data[param_id].get("name", "")
-        
-        # Update the parameter
-        data[param_id]["description"] = description
-        if "name" in data[param_id]:
-            data[param_id]["name"] = name
-        if "details" not in data[param_id]:
-            data[param_id]["details"] = ""
-        data[param_id]["details"] = details
-    else:
-        # Parameter doesn't exist, try to add it if we have enough information
-        if name:
-            # Add to parameters section
-            if "parameters" not in data:
-                data["parameters"] = {}
-            
-            data["parameters"][param_id] = {
-                "name": name,
-                "description": description,
-                "details": details
-            }
-        else:
-            return False, f"Parameter {param_id} not found in {ecm_type}"
-    
-    # Save the updated file
-    success, save_message = save_parameter_file(ecm_type, data)
-    if success:
-        return True, f"Updated details for parameter {param_id} in {ecm_type}"
-    else:
-        return False, save_message
-
-def git_pull():
-    """Pull the latest changes from the Git repository"""
-    try:
-        # Check if git is available first
-        which_git = subprocess.run(
-            ["where", "git"] if os.name == "nt" else ["which", "git"],
-            capture_output=True,
-            text=True
-        )
-        
-        if which_git.returncode != 0:
-            return False, "Git executable not found in PATH"
-            
-        # Check if current directory is a git repository
-        is_git_repo = subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"],
-            capture_output=True,
-            text=True
-        )
-        
-        if is_git_repo.returncode != 0:
-            return False, "Not a Git repository"
-        
-        # Perform the pull
-        result = subprocess.run(
-            ["git", "pull"],
-            capture_output=True, 
-            text=True,
-            check=False  # Don't raise exception on non-zero return code
-        )
-        
-        if result.returncode != 0:
-            return False, f"Git pull failed: {result.stderr.strip()}"
-            
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, f"Git pull failed: {e.stderr.strip() if hasattr(e, 'stderr') else str(e)}"
-    except Exception as e:
-        return False, f"Error: {str(e)}"
-
-def git_add_and_commit(file_path, commit_message):
-    """Add a file and commit changes to the Git repository"""
-    try:
-        # Check if git is available
-        which_git = subprocess.run(
-            ["where", "git"] if os.name == "nt" else ["which", "git"],
-            capture_output=True,
-            text=True
-        )
-        
-        if which_git.returncode != 0:
-            return False, "Git executable not found in PATH"
-            
-        # Check if current directory is a git repository
-        is_git_repo = subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"],
-            capture_output=True,
-            text=True
-        )
-        
-        if is_git_repo.returncode != 0:
-            return False, "Not a Git repository"
-        
-        # Check if file exists before adding
-        if not os.path.exists(file_path):
-            return False, f"File {file_path} does not exist"
-        
-        # Add the file
-        add_result = subprocess.run(
-            ["git", "add", file_path],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        
-        if add_result.returncode != 0:
-            return False, f"Git add failed: {add_result.stderr.strip()}"
-        
-        # Commit the changes
-        commit_result = subprocess.run(
-            ["git", "commit", "-m", commit_message],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        
-        # Check if the commit was successful (it might fail if there are no changes)
-        if commit_result.returncode != 0:
-            if "nothing to commit" in commit_result.stdout + commit_result.stderr:
-                return False, "No changes to commit"
-            else:
-                return False, commit_result.stderr.strip()
-        
-        return True, commit_result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, f"Git operation failed: {e.stderr.strip() if hasattr(e, 'stderr') else str(e)}"
-    except Exception as e:
-        return False, f"Error: {str(e)}"
-
-def git_push():
-    """Push changes to the remote Git repository"""
-    try:
-        # Check if git is available
-        which_git = subprocess.run(
-            ["where", "git"] if os.name == "nt" else ["which", "git"],
-            capture_output=True,
-            text=True
-        )
-        
-        if which_git.returncode != 0:
-            return False, "Git executable not found in PATH"
-            
-        # Check if current directory is a git repository
-        is_git_repo = subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"],
-            capture_output=True,
-            text=True
-        )
-        
-        if is_git_repo.returncode != 0:
-            return False, "Not a Git repository"
-        
-        # Push to remote
-        result = subprocess.run(
-            ["git", "push"],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode != 0:
-            return False, f"Git push failed: {result.stderr.strip()}"
-            
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, f"Git push failed: {e.stderr.strip() if hasattr(e, 'stderr') else str(e)}"
-    except Exception as e:
-        return False, f"Error: {str(e)}"
-
-def format_json(obj, indent=2):
-    """Format a JSON object with proper indentation"""
-    return json.dumps(obj, indent=indent, sort_keys=True)
-
-def get_parameter_details_from_json(param_id, ecm_type):
-    """
-    Get parameter details from the JSON file
-    Returns tuple of (parameter_data, details_text)
-    """
-    if not param_id or not ecm_type:
-        return None, None
-    
-    try:
-        # Load the JSON file for the ECM type
-        data, message = load_parameter_file(ecm_type)
-        if data is None:
-            return None, None
-        
-        # Check for parameter in parameters section first
-        if "parameters" in data and param_id in data["parameters"]:
-            param_data = data["parameters"][param_id]
-            return param_data, param_data.get("details", "")
-        
-        # Check if parameter exists at root level (file inconsistency)
-        elif param_id in data and param_id != "name" and param_id != "description" and param_id != "parameters":
-            param_data = data[param_id]
-            return param_data, param_data.get("details", "")
-            
-        # Parameter not found
-        return None, None
-    
-    except Exception as e:
-        print(f"Error getting parameter details: {str(e)}")
-        return None, None
+            self.status_label.setText(f"❌ Error: {str(e)}")
 
 # Main application
 def main():

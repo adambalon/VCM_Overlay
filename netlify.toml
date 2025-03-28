@@ -1,0 +1,10 @@
+[build]
+  publish = "web"
+  command = ""  # No build command needed for static files
+
+[build.environment]
+  NODE_VERSION = "16"  # Set a Node.js version if needed
+
+# Skip Python dependency installation
+[build.processing]
+  skip_processing = true 
