@@ -1,0 +1,161 @@
+{
+  "name": "E38",
+  "description": "E38 Engine Control Module",
+  "parameters": {
+    "12600": {
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane",
+      "description": "This is the High Octane spark advance versus RPM and Cylinder Airmass.",
+      "details": ""
+    },
+    "12612": {
+      "name": "SLECT Mult",
+      "description": "Multiplier for SLECT parameter.",
+      "details": "Affects the spark/timing during specific load conditions."
+    },
+    "12647": {
+      "name": "Idle Base Spark vs. RPM vs. CylAir",
+      "description": "",
+      "details": ""
+    },
+    "12734": {
+      "name": "Max Torque Timing",
+      "description": "Timing for maximum torque output.",
+      "details": "Adjusts spark timing to achieve optimal torque based on engine conditions."
+    },
+    "7969": {
+      "name": "Parameter 7969",
+      "description": "Auto-added parameter",
+      "details": ""
+    },
+    "2007": {
+      "name": "Parameter 2007",
+      "description": "Auto-added parameter",
+      "details": ""
+    }
+  },
+  "12614": {
+    "id": "12614",
+    "name": "Idle Coastdown Spark vs. RPM vs. CylAir",
+    "description": ""
+  },
+  "12642": {
+    "id": "12642",
+    "name": "Startup Idle Flare Control Mult vs. ECT",
+    "description": ""
+  },
+  "12704": {
+    "id": "12704",
+    "name": "Minimum Final Spark TqMgt",
+    "description": ""
+  },
+  "12660": {
+    "id": "12660",
+    "name": "Max Torque Timing vs. RPM vs. Cyl Air",
+    "description": ""
+  },
+  "12632": {
+    "id": "12632",
+    "name": "Idle Spark Adder Mult vs. Baro",
+    "description": ""
+  },
+  "32950": {
+    "id": "32950",
+    "name": "Spark Smoothing Gain Low Torque",
+    "description": ""
+  },
+  "12637": {
+    "id": "12637",
+    "name": "PE/COT Spark Advance Correction Mult vs. MAP",
+    "description": ""
+  },
+  "33600": {
+    "id": "33600",
+    "name": "Startup Idle Speed Gear",
+    "description": ""
+  },
+  "12104": {
+    "id": "12104",
+    "name": "Minimum Idle Speed vs. VSS",
+    "description": ""
+  },
+  "12080": {
+    "id": "12080",
+    "name": "Target Idle Speed vs. Coolant Temp vs. (Drive & Park, A/C On & Off)",
+    "description": ""
+  },
+  "12681": {
+    "id": "12681",
+    "name": "IAT Spark Advance Correction 2",
+    "description": ""
+  },
+  "12600": {
+    "id": "12600",
+    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane",
+    "description": ""
+  },
+  "12648": {
+    "id": "12648",
+    "name": "Idle Underspeed Spark vs. RPM Error (P/N)",
+    "description": ""
+  },
+  "12701": {
+    "id": "12701",
+    "name": "Minimum Final Spark",
+    "description": ""
+  },
+  "12646": {
+    "id": "12646",
+    "name": "Idle Overspeed Spark vs. RPM Error (P/N)",
+    "description": ""
+  },
+  "12661": {
+    "id": "12661",
+    "name": "Max Torque Timing Alcohol Adder",
+    "description": ""
+  },
+  "12599": {
+    "id": "12599",
+    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane, DOD",
+    "description": ""
+  },
+  "12676": {
+    "id": "12676",
+    "name": "Lightoff Spark",
+    "description": ""
+  },
+  "12601": {
+    "id": "12601",
+    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane",
+    "description": ""
+  },
+  "12643": {
+    "id": "12643",
+    "name": "Startup Idle Flare Control vs. RPM Error",
+    "description": ""
+  },
+  "12703": {
+    "id": "12703",
+    "name": "Minimum Final Spark Reduced Power Mode",
+    "description": ""
+  },
+  "12620": {
+    "id": "12620",
+    "name": "IAT Spark Advance Correction - Mult",
+    "description": ""
+  },
+  "12675": {
+    "id": "12675",
+    "name": "Cold Launch Spark",
+    "description": ""
+  },
+  "14100": {
+    "id": "14100",
+    "name": "IAT Sensor Curve",
+    "description": ""
+  },
+  "2041": {
+    "id": "2041",
+    "name": "Tach Output Resolutions",
+    "description": "Low: Number of periods the tach output remains low."
+  }
+}

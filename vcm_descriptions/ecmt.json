@@ -1,0 +1,21 @@
+{
+    "ecm_types": [
+        {
+            "id": "E38",
+            "name": "E38 ECM",
+            "file": "E38.json"
+        },
+        {
+            "id": "E92",
+            "name": "E92 ECM",
+            "file": "E92.json"
+        }
+    ],
+    "tcm_types": [
+        {
+            "id": "none",
+            "name": "None",
+            "file": null
+        }
+    ]
+} 

@@ -1,0 +1,7 @@
+PyQt5==5.15.9
+pygetwindow==0.0.9
+keyboard==0.13.5
+mss==9.0.1
+numpy>=1.22.0
+pywinauto==0.6.8
+pynput==1.7.6 
