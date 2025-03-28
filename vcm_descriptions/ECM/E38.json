@@ -129,137 +129,114 @@
   "parameters": {
     "12600": {
       "description": "This is the High Octane spark advance versus RPM and Cylinder Airmass.",
-      "details": "",
       "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane"
     },
     "12612": {
       "description": "Multiplier for SLECT parameter.",
-      "details": "Affects the spark/timing during specific load conditions.",
       "name": "SLECT Mult"
     },
     "12622": {
       "description": "",
-      "details": "",
       "name": "EGR Spark Advance Correction - Add"
     },
     "12630": {
       "description": "",
-      "details": "",
       "name": "Idle Spark Adder vs. ECT (P/N)"
     },
     "12631": {
       "description": "",
-      "details": "",
       "name": "Idle Spark Adder vs. ECT (In Gear)"
     },
     "12634": {
       "description": "",
-      "details": "",
       "name": "PE/COT Spark Advance Correction (Gasoline) vs. RPM vs. EQ Ratio"
+    },
+    "12635": {
+      "description": "",
+      "name": "PE/COT Spark Advance Correction (Alcohol) vs. RPM vs. EQ Ratio"
     },
     "12636": {
       "description": "",
-      "details": "",
       "name": "PE/COT Spark Advance Correction Mult vs. Fuel Composition"
     },
     "12647": {
       "description": "",
-      "details": "",
       "name": "Idle Base Spark vs. RPM vs. CylAir"
     },
     "12649": {
       "description": "",
-      "details": "",
       "name": "Idle Underspeed Spark vs. RPM Error (In Gear)"
     },
     "12662": {
       "description": "",
-      "details": "",
       "name": "Max Torque Timing EGR Adder"
     },
     "12670": {
       "description": "",
-      "details": "Boner time",
       "name": "Idle Overspeed Spark vs. RPM Error (Coastdown)"
     },
     "12671": {
       "description": "",
-      "details": "",
       "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
     },
     "12672": {
       "description": "",
-      "details": "",
       "name": "Lightoff Spark Mult vs. ECT"
     },
     "12673": {
       "description": "",
-      "details": "",
       "name": "Lightoff Spark Mult vs. ERT"
     },
     "12677": {
       "description": "",
-      "details": "",
       "name": "Lightoff Spark (Coastdown)"
     },
     "12680": {
       "description": "",
-      "details": "",
       "name": "Lightoff Spark Idle In Gear"
     },
     "12682": {
       "description": "",
-      "details": "",
       "name": "Piston Slap Spark"
     },
     "12683": {
       "description": "",
-      "details": "",
       "name": "Cranking Spark"
     },
     "12734": {
       "description": "Timing for maximum torque output.",
-      "details": "Adjusts spark timing to achieve optimal torque based on engine conditions.",
       "name": "Max Torque Timing"
     },
     "2007": {
       "description": "Auto-added parameter",
-      "details": "",
       "name": "Parameter 2007"
     },
     "2666": {
       "description": "",
-      "details": "",
       "name": "Spark Smoothing Max Torque Delta"
     },
     "2668": {
       "description": "",
-      "details": "",
       "name": "Spark Smoothing Max Torque Loss"
     },
     "270": {
       "description": "",
-      "details": "",
       "name": "Manual Trans Spark Smoothing (RDSC) Master Enable"
     },
     "2786": {
       "description": "",
-      "details": "",
       "name": "Bidir Retard Max"
     },
     "32951": {
       "description": "",
-      "details": "",
       "name": "Spark Smoothing Gain High Torque"
     },
     "32952": {
       "description": "",
-      "details": "",
       "name": "High Torque Threshold"
     },
     "7969": {
       "description": "Auto-added parameter",
-      "details": "",
       "name": "Parameter 7969"
     }
   }

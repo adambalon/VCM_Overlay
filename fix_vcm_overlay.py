@@ -1687,8 +1687,8 @@ def add_parameter_to_json(param_id, param_name, ecm_type):
     
     data["parameters"][param_id] = {
         "name": param_name,
-        "description": "", 
-        "details": ""
+        "description": ""
+        # No details field by default - allowing for manual entry only
     }
     
     # Save the updated file

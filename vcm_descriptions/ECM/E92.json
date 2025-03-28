@@ -1,24 +1,21 @@
 {
-    "name": "E92",
-    "description": "E92 Engine Control Module",
-    "parameters": {
-        "12647": {
-            "id": "12647",
-            "name": "Idle Base Spark vs. RPM vs. CylAir",
-            "description": "Base spark timing at idle for E92 ECM.",
-            "details": "Controls ignition timing at idle conditions for E92 ECM with specific calibration differences from other ECMs."
-        },
-        "13250": {
-            "id": "13250",
-            "name": "EGR Base",
-            "description": "Base EGR control parameter.",
-            "details": "Controls the base exhaust gas recirculation values under standard conditions."
-        },
-        "13475": {
-            "id": "13475",
-            "name": "VCT Control",
-            "description": "Variable Cam Timing control.",
-            "details": "Manages the cam timing adjustment for optimal performance and emissions."
-        }
+  "description": "E92 Engine Control Module",
+  "name": "E92",
+  "parameters": {
+    "12647": {
+      "description": "Base spark timing at idle for E92 ECM.",
+      "id": "12647",
+      "name": "Idle Base Spark vs. RPM vs. CylAir"
+    },
+    "13250": {
+      "description": "Base EGR control parameter.",
+      "id": "13250",
+      "name": "EGR Base"
+    },
+    "13475": {
+      "description": "Variable Cam Timing control.",
+      "id": "13475",
+      "name": "VCT Control"
     }
-} 
+  }
+}
