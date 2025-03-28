@@ -2,29 +2,142 @@
   "description": "E38 Engine Control Module",
   "name": "E38",
   "parameters": {
+    "12598": {
+      "description": "",
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane, DOD"
+    },
+    "12599": {
+      "description": "",
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane, DOD"
+    },
+    "12600": {
+      "description": "",
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane"
+    },
+    "12601": {
+      "description": "",
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane"
+    },
     "12614": {
       "description": "",
       "name": "Idle Coastdown Spark vs. RPM vs. CylAir"
+    },
+    "12620": {
+      "description": "",
+      "name": "IAT Spark Advance Correction - Mult"
+    },
+    "12622": {
+      "description": "",
+      "name": "EGR Spark Advance Correction - Add"
+    },
+    "12624": {
+      "description": "",
+      "name": "ECT Spark Advance Correction - Add"
+    },
+    "12635": {
+      "description": "",
+      "name": "PE/COT Spark Advance Correction (Alcohol) vs. RPM vs. EQ Ratio"
+    },
+    "12642": {
+      "description": "",
+      "name": "Startup Idle Flare Control Mult vs. ECT"
     },
     "12643": {
       "description": "",
       "name": "Startup Idle Flare Control vs. RPM Error"
     },
+    "12646": {
+      "description": "",
+      "name": "Idle Overspeed Spark vs. RPM Error (P/N)"
+    },
+    "12647": {
+      "description": "",
+      "name": "Idle Overspeed Spark vs. RPM Error (In Gear)"
+    },
     "12648": {
       "description": "",
       "name": "Idle Underspeed Spark vs. RPM Error (P/N)"
     },
+    "12649": {
+      "description": "",
+      "name": "Idle Underspeed Spark vs. RPM Error (In Gear)"
+    },
+    "12660": {
+      "description": "",
+      "name": "Max Torque Timing vs. RPM vs. Cyl Air"
+    },
+    "12666": {
+      "description": "",
+      "name": "Lightoff Spark Mult vs. Startup ECT"
+    },
     "12670": {
       "description": "",
+      "details": "boner time",
       "name": "Idle Overspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12671": {
+      "description": "",
+      "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12673": {
+      "description": "",
+      "name": "Lightoff Spark Mult vs. ERT"
+    },
+    "12674": {
+      "description": "",
+      "name": "Lightoff Spark Mult vs. TPS"
+    },
+    "12677": {
+      "description": "",
+      "name": "Lightoff Spark (Coastdown)"
+    },
+    "12680": {
+      "description": "",
+      "name": "Lightoff Spark Idle In Gear"
+    },
+    "12681": {
+      "description": "",
+      "name": "IAT Spark Advance Correction 2"
+    },
+    "12682": {
+      "description": "",
+      "name": "Piston Slap Spark"
+    },
+    "12683": {
+      "description": "",
+      "name": "Cranking Spark"
+    },
+    "12684": {
+      "description": "",
+      "name": "VCP Spark"
+    },
+    "12701": {
+      "description": "",
+      "name": "Minimum Final Spark"
+    },
+    "12704": {
+      "description": "",
+      "name": "Minimum Final Spark TqMgt"
+    },
+    "12962": {
+      "description": "",
+      "name": "Knock Sensor Threshold Mult Cyl3"
     },
     "12968": {
       "description": "",
       "name": "Knock Sensor Threshold Transient Mult"
     },
+    "12970": {
+      "description": "",
+      "name": "Knock Sensor Threshold Init"
+    },
     "12971": {
       "description": "",
       "name": "Knock Sensor Threshold Min"
+    },
+    "2786": {
+      "description": "",
+      "name": "Bidir Retard Max"
     }
   }
 }
