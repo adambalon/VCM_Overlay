@@ -106,8 +106,8 @@ class VCMOverlay(QMainWindow):
         
         # Position in top right of screen - calculate position based on screen size
         screen_geometry = QApplication.desktop().availableGeometry()
-        self.setGeometry(screen_geometry.width() - 520, 20, 500, 450)  # Increased height to 450
-        self.setMinimumSize(400, 350)  # Increased minimum height to 350
+        self.setGeometry(screen_geometry.width() - 520, 20, 500, 550)  # Increased height to 550
+        self.setMinimumSize(400, 450)  # Increased minimum height to 450
         
         # Create an inner container with rounded corners
         self.setStyleSheet("""
@@ -266,34 +266,7 @@ class VCMOverlay(QMainWindow):
         
         param_layout.addWidget(param_header_container)
         
-        # Parameter details in a scrollable area to handle overflow
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setFrameShape(QScrollArea.NoFrame)
-        scroll_area.setStyleSheet("""
-            QScrollArea {
-                background: transparent;
-                border: none;
-            }
-            QScrollBar:vertical {
-                background: #181818;
-                width: 8px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:vertical {
-                background: #333333;
-                border-radius: 4px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                border: none;
-                background: none;
-            }
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                background: none;
-            }
-        """)
-        
+        # Parameter details container
         details_container = QWidget()
         details_container.setObjectName("detailsContainer")
         details_container.setStyleSheet("""
@@ -342,21 +315,6 @@ class VCMOverlay(QMainWindow):
         self.param_desc_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.param_desc_label.setMinimumHeight(30)  # Set minimum height for description
         param_details_layout.addWidget(self.param_desc_label, row, 1)
-        row += 1
-        
-        param_details_layout.addWidget(QLabel("DETAILS:"), row, 0)
-        self.param_details_label = QLabel("")
-        self.param_details_label.setStyleSheet(f"{value_style}")
-        self.param_details_label.setWordWrap(True)  # Enable word wrap
-        # Make the details field expand to fit content rather than being clipped
-        self.param_details_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.param_details_label.setMinimumHeight(60)  # Set minimum height to ensure visibility
-        param_details_layout.addWidget(self.param_details_label, row, 1)
-        
-        # Set row stretch to give more space to the larger fields
-        param_details_layout.setRowStretch(2, 1)  # NAME
-        param_details_layout.setRowStretch(3, 2)  # DESC
-        param_details_layout.setRowStretch(4, 3)  # DETAILS
         
         # Style the label columns
         for i in range(param_details_layout.rowCount()):
@@ -365,13 +323,65 @@ class VCMOverlay(QMainWindow):
                 label_item.widget().setStyleSheet(label_style)
                 label_item.widget().setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         
-        # Instead of using a scroll area with fixed size, directly add the details container
-        # to allow it to expand with the content
+        # Add the parameter info container to the param layout
         param_layout.addWidget(details_container)
         
-        # Add a stretcher below the param_group to push everything to the top
-        content_layout.addWidget(param_group, 0)  # Change stretch factor to 0
-        content_layout.addStretch(1)  # Add a stretch below to push everything up
+        # Create a separate container for the details field
+        details_field_container = QWidget()
+        details_field_container.setObjectName("detailsFieldContainer")
+        details_field_container.setStyleSheet("""
+            #detailsFieldContainer {
+                background-color: #111111;
+                border: 1px solid #222222;
+                border-radius: 8px;
+            }
+        """)
+        details_field_layout = QVBoxLayout(details_field_container)
+        details_field_layout.setContentsMargins(10, 10, 10, 10)
+        details_field_layout.setSpacing(3)
+        
+        # Add a label for the details field
+        details_header = QWidget()
+        details_header.setObjectName("detailsHeader")
+        details_header.setStyleSheet("""
+            #detailsHeader {
+                background: #181818;
+                border: 1px solid #222222;
+                border-radius: 6px;
+            }
+        """)
+        details_header_layout = QHBoxLayout(details_header)
+        details_header_layout.setContentsMargins(8, 3, 8, 3)
+        
+        details_label = QLabel("PARAMETER DETAILS")
+        details_label.setAlignment(Qt.AlignCenter)
+        details_label.setStyleSheet("""
+            font-size: 10pt; 
+            font-weight: bold; 
+            color: #AAAAAA;
+        """)
+        details_header_layout.addWidget(details_label)
+        
+        details_field_layout.addWidget(details_header)
+        
+        # Create an editable text box for the details field
+        self.param_details_text = QTextEdit()
+        self.param_details_text.setStyleSheet("""
+            background-color: #181818;
+            color: #CCCCCC;
+            border: 1px solid #222222;
+            border-radius: 6px;
+            font-family: Consolas, monospace;
+            font-size: 9.5pt;
+            padding: 5px;
+        """)
+        self.param_details_text.setMinimumHeight(200)  # Make it quite tall
+        details_field_layout.addWidget(self.param_details_text)
+        
+        # Add the details field container to the content layout
+        content_layout.addWidget(param_group, 1)  # Give parameter group a stretch factor of 1
+        content_layout.addWidget(details_field_container, 3)  # Give details field a higher stretch factor
+        content_layout.addStretch(0)  # Minimal stretch after components to minimize empty space
         
         # Button row with rounded style
         button_container = QWidget()
@@ -529,7 +539,7 @@ class VCMOverlay(QMainWindow):
         self.param_name_label.setText("")
         # self.param_value_label.setText("")  # Keep this to avoid breaking code but field is hidden
         self.param_desc_label.setText("")
-        self.param_details_label.setText("")
+        self.param_details_text.clear()  # Clear the details text box
         
         # Extract specific parts
         try:
@@ -564,7 +574,16 @@ class VCMOverlay(QMainWindow):
                         name_part = name_part[1:]
                     
                     self.param_name_label.setText(name_part.strip())
+                    # Put the description in the details field with better formatting
                     self.param_desc_label.setText(desc_part.strip())
+                    
+                    # Format the details text with the full parameter information
+                    details_text = f"Parameter ID: {self.param_id_label.text()}\n\n"
+                    details_text += f"Name: {name_part.strip()}\n\n"
+                    details_text += f"Description: {desc_part.strip()}\n\n"
+                    details_text += f"Full Text:\n{text}"
+                    
+                    self.param_details_text.setText(details_text)
                 else:
                     # No description, just name
                     name_part = remainder
@@ -574,6 +593,13 @@ class VCMOverlay(QMainWindow):
                         name_part = name_part[1:]
                     
                     self.param_name_label.setText(name_part.strip())
+                    
+                    # Format the details text with the full parameter information
+                    details_text = f"Parameter ID: {self.param_id_label.text()}\n\n"
+                    details_text += f"Name: {name_part.strip()}\n\n"
+                    details_text += f"Full Text:\n{text}"
+                    
+                    self.param_details_text.setText(details_text)
             
             # Update the param info text in the debug window
             if hasattr(self, 'param_info_text') and self.param_info_text:
@@ -581,7 +607,7 @@ class VCMOverlay(QMainWindow):
 ID: {self.param_id_label.text()}
 Name: {self.param_name_label.text()}
 Description: {self.param_desc_label.text()}
-Details: {self.param_details_label.text()}"""
+Details: {self.param_details_text.toPlainText()}"""
                 self.param_info_text.setText(formatted_info)
                 
         except Exception as e:
