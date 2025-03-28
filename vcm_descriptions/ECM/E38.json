@@ -109,11 +109,6 @@
     "id": "14100",
     "name": "IAT Sensor Curve"
   },
-  "2041": {
-    "description": "Low: Number of periods the tach output remains low.",
-    "id": "2041",
-    "name": "Tach Output Resolutions"
-  },
   "32950": {
     "description": "",
     "id": "32950",
@@ -123,14 +118,6 @@
     "description": "",
     "id": "33600",
     "name": "Startup Idle Speed Gear"
-  },
-  "description": "E38 Engine Control Module",
-  "name": "E38",
-  "parameters": {
-    "12600": {
-      "description": "This is the High Octane spark advance versus RPM and Cylinder Airmass.",
-      "details": "",
-      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane"
     },
     "12612": {
       "description": "Multiplier for SLECT parameter.",
@@ -216,11 +203,6 @@
       "description": "",
       "details": "",
       "name": "Cranking Spark"
-    },
-    "12734": {
-      "description": "Timing for maximum torque output.",
-      "details": "Adjusts spark timing to achieve optimal torque based on engine conditions.",
-      "name": "Max Torque Timing"
     },
     "2007": {
       "description": "Auto-added parameter",
