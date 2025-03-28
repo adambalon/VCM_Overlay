@@ -1,243 +1,30 @@
 {
-  "12080": {
-    "description": "",
-    "id": "12080",
-    "name": "Target Idle Speed vs. Coolant Temp vs. (Drive & Park, A/C On & Off)"
-  },
-  "12104": {
-    "description": "",
-    "id": "12104",
-    "name": "Minimum Idle Speed vs. VSS"
-  },
-  "12599": {
-    "description": "",
-    "id": "12599",
-    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane, DOD"
-  },
-  "12600": {
-    "description": "",
-    "id": "12600",
-    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane"
-  },
-  "12601": {
-    "description": "",
-    "id": "12601",
-    "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane"
-  },
-  "12614": {
-    "description": "",
-    "id": "12614",
-    "name": "Idle Coastdown Spark vs. RPM vs. CylAir"
-  },
-  "12620": {
-    "description": "",
-    "id": "12620",
-    "name": "IAT Spark Advance Correction - Mult"
-  },
-  "12632": {
-    "description": "",
-    "id": "12632",
-    "name": "Idle Spark Adder Mult vs. Baro"
-  },
-  "12637": {
-    "description": "",
-    "id": "12637",
-    "name": "PE/COT Spark Advance Correction Mult vs. MAP"
-  },
-  "12642": {
-    "description": "",
-    "id": "12642",
-    "name": "Startup Idle Flare Control Mult vs. ECT"
-  },
-  "12643": {
-    "description": "",
-    "id": "12643",
-    "name": "Startup Idle Flare Control vs. RPM Error"
-  },
-  "12646": {
-    "description": "",
-    "id": "12646",
-    "name": "Idle Overspeed Spark vs. RPM Error (P/N)"
-  },
-  "12648": {
-    "description": "",
-    "id": "12648",
-    "name": "Idle Underspeed Spark vs. RPM Error (P/N)"
-  },
-  "12660": {
-    "description": "",
-    "id": "12660",
-    "name": "Max Torque Timing vs. RPM vs. Cyl Air"
-  },
-  "12661": {
-    "description": "",
-    "id": "12661",
-    "name": "Max Torque Timing Alcohol Adder"
-  },
-  "12675": {
-    "description": "",
-    "id": "12675",
-    "name": "Cold Launch Spark"
-  },
-  "12676": {
-    "description": "",
-    "id": "12676",
-    "name": "Lightoff Spark"
-  },
-  "12681": {
-    "description": "",
-    "id": "12681",
-    "name": "IAT Spark Advance Correction 2"
-  },
-  "12701": {
-    "description": "",
-    "id": "12701",
-    "name": "Minimum Final Spark"
-  },
-  "12703": {
-    "description": "",
-    "id": "12703",
-    "name": "Minimum Final Spark Reduced Power Mode"
-  },
-  "12704": {
-    "description": "",
-    "id": "12704",
-    "name": "Minimum Final Spark TqMgt"
-  },
-  "14100": {
-    "description": "",
-    "id": "14100",
-    "name": "IAT Sensor Curve"
-  },
-  "2041": {
-    "description": "Low: Number of periods the tach output remains low.",
-    "id": "2041",
-    "name": "Tach Output Resolutions"
-  },
-  "32950": {
-    "description": "",
-    "id": "32950",
-    "name": "Spark Smoothing Gain Low Torque"
-  },
-  "33600": {
-    "description": "",
-    "id": "33600",
-    "name": "Startup Idle Speed Gear"
-  },
   "description": "E38 Engine Control Module",
   "name": "E38",
   "parameters": {
-    "12600": {
-      "description": "This is the High Octane spark advance versus RPM and Cylinder Airmass.",
-      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane"
-    },
-    "12612": {
-      "description": "Multiplier for SLECT parameter.",
-      "name": "SLECT Mult"
-    },
-    "12622": {
+    "12614": {
       "description": "",
-      "name": "EGR Spark Advance Correction - Add"
+      "name": "Idle Coastdown Spark vs. RPM vs. CylAir"
     },
-    "12630": {
+    "12643": {
       "description": "",
-      "name": "Idle Spark Adder vs. ECT (P/N)"
+      "name": "Startup Idle Flare Control vs. RPM Error"
     },
-    "12631": {
+    "12648": {
       "description": "",
-      "name": "Idle Spark Adder vs. ECT (In Gear)"
-    },
-    "12634": {
-      "description": "",
-      "name": "PE/COT Spark Advance Correction (Gasoline) vs. RPM vs. EQ Ratio"
-    },
-    "12635": {
-      "description": "",
-      "name": "PE/COT Spark Advance Correction (Alcohol) vs. RPM vs. EQ Ratio"
-    },
-    "12636": {
-      "description": "",
-      "name": "PE/COT Spark Advance Correction Mult vs. Fuel Composition"
-    },
-    "12647": {
-      "description": "",
-      "name": "Idle Base Spark vs. RPM vs. CylAir"
-    },
-    "12649": {
-      "description": "",
-      "name": "Idle Underspeed Spark vs. RPM Error (In Gear)"
-    },
-    "12662": {
-      "description": "",
-      "name": "Max Torque Timing EGR Adder"
+      "name": "Idle Underspeed Spark vs. RPM Error (P/N)"
     },
     "12670": {
       "description": "",
       "name": "Idle Overspeed Spark vs. RPM Error (Coastdown)"
     },
-    "12671": {
+    "12968": {
       "description": "",
-      "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
+      "name": "Knock Sensor Threshold Transient Mult"
     },
-    "12672": {
+    "12971": {
       "description": "",
-      "name": "Lightoff Spark Mult vs. ECT"
-    },
-    "12673": {
-      "description": "",
-      "name": "Lightoff Spark Mult vs. ERT"
-    },
-    "12677": {
-      "description": "",
-      "name": "Lightoff Spark (Coastdown)"
-    },
-    "12680": {
-      "description": "",
-      "name": "Lightoff Spark Idle In Gear"
-    },
-    "12682": {
-      "description": "",
-      "name": "Piston Slap Spark"
-    },
-    "12683": {
-      "description": "",
-      "name": "Cranking Spark"
-    },
-    "12734": {
-      "description": "Timing for maximum torque output.",
-      "name": "Max Torque Timing"
-    },
-    "2007": {
-      "description": "Auto-added parameter",
-      "name": "Parameter 2007"
-    },
-    "2666": {
-      "description": "",
-      "name": "Spark Smoothing Max Torque Delta"
-    },
-    "2668": {
-      "description": "",
-      "name": "Spark Smoothing Max Torque Loss"
-    },
-    "270": {
-      "description": "",
-      "name": "Manual Trans Spark Smoothing (RDSC) Master Enable"
-    },
-    "2786": {
-      "description": "",
-      "name": "Bidir Retard Max"
-    },
-    "32951": {
-      "description": "",
-      "name": "Spark Smoothing Gain High Torque"
-    },
-    "32952": {
-      "description": "",
-      "name": "High Torque Threshold"
-    },
-    "7969": {
-      "description": "Auto-added parameter",
-      "name": "Parameter 7969"
+      "name": "Knock Sensor Threshold Min"
     }
   }
 }

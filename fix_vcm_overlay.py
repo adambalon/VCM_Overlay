@@ -663,25 +663,11 @@ class VCMOverlay(QMainWindow):
                         param_desc = stored_desc
                         self.param_desc_label.setText(stored_desc)
                     
-                    # If we have stored details, use those instead of generating new ones
+                    # If we have stored details, use those (but NEVER generate new ones)
                     if stored_details:
                         self.param_details_text.setText(stored_details)
                         self.log_debug(f"Loaded parameter details from JSON for {param_id}")
-                    else:
-                        # Generate details text with the full parameter information
-                        details_text = f"Parameter ID: {self.param_id_label.text()}\n\n"
-                        details_text += f"Name: {param_name}\n\n"
-                        details_text += f"Description: {param_desc}\n\n"
-                        details_text += f"Full Text:\n{text}"
-                        self.param_details_text.setText(details_text)
-                else:
-                    # Generate details text with the full parameter information
-                    details_text = f"Parameter ID: {self.param_id_label.text()}\n\n"
-                    details_text += f"Name: {param_name}\n\n"
-                    if param_desc:
-                        details_text += f"Description: {param_desc}\n\n"
-                    details_text += f"Full Text:\n{text}"
-                    self.param_details_text.setText(details_text)
+                    # Leave details empty otherwise - no auto-generated content
                 
                 # Try to automatically add the parameter if it's not in the JSON file and we have a name
                 if param_name:
@@ -1537,13 +1523,9 @@ Details: {self.param_details_text.toPlainText()}"""
                     self.log_debug(f"Refreshed parameter details for {param_id}")
                     self.git_status_label.setText(f"✓ Parameter data refreshed")
                 else:
-                    # Generate details text with the full parameter information
-                    details_text = f"Parameter ID: {param_id}\n\n"
-                    details_text += f"Name: {stored_name}\n\n"
-                    details_text += f"Description: {stored_desc}\n\n"
-                    details_text += f"Full Text:\n{self.last_parameter_text}"
-                    self.param_details_text.setText(details_text)
-                    self.git_status_label.setText(f"✓ Parameter refreshed, but no detailed information found")
+                    # Don't generate details text, leave it empty
+                    self.param_details_text.clear()
+                    self.git_status_label.setText(f"✓ Parameter refreshed, no details found")
             else:
                 self.git_status_label.setText(f"❌ Parameter {param_id} not found in remote data")
                 
