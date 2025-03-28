@@ -137,6 +137,11 @@
       "details": "Affects the spark/timing during specific load conditions.",
       "name": "SLECT Mult"
     },
+    "12622": {
+      "description": "",
+      "details": "",
+      "name": "EGR Spark Advance Correction - Add"
+    },
     "12630": {
       "description": "",
       "details": "",
@@ -146,6 +151,16 @@
       "description": "",
       "details": "",
       "name": "Idle Spark Adder vs. ECT (In Gear)"
+    },
+    "12634": {
+      "description": "",
+      "details": "",
+      "name": "PE/COT Spark Advance Correction (Gasoline) vs. RPM vs. EQ Ratio"
+    },
+    "12636": {
+      "description": "",
+      "details": "",
+      "name": "PE/COT Spark Advance Correction Mult vs. Fuel Composition"
     },
     "12647": {
       "description": "",
@@ -157,6 +172,11 @@
       "details": "",
       "name": "Idle Underspeed Spark vs. RPM Error (In Gear)"
     },
+    "12662": {
+      "description": "",
+      "details": "",
+      "name": "Max Torque Timing EGR Adder"
+    },
     "12670": {
       "description": "",
       "details": "Boner time",
@@ -166,6 +186,31 @@
       "description": "",
       "details": "",
       "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12672": {
+      "description": "",
+      "details": "",
+      "name": "Lightoff Spark Mult vs. ECT"
+    },
+    "12673": {
+      "description": "",
+      "details": "",
+      "name": "Lightoff Spark Mult vs. ERT"
+    },
+    "12677": {
+      "description": "",
+      "details": "",
+      "name": "Lightoff Spark (Coastdown)"
+    },
+    "12680": {
+      "description": "",
+      "details": "",
+      "name": "Lightoff Spark Idle In Gear"
+    },
+    "12682": {
+      "description": "",
+      "details": "",
+      "name": "Piston Slap Spark"
     },
     "12683": {
       "description": "",
@@ -187,6 +232,11 @@
       "details": "",
       "name": "Spark Smoothing Max Torque Delta"
     },
+    "2668": {
+      "description": "",
+      "details": "",
+      "name": "Spark Smoothing Max Torque Loss"
+    },
     "270": {
       "description": "",
       "details": "",
@@ -196,6 +246,16 @@
       "description": "",
       "details": "",
       "name": "Bidir Retard Max"
+    },
+    "32951": {
+      "description": "",
+      "details": "",
+      "name": "Spark Smoothing Gain High Torque"
+    },
+    "32952": {
+      "description": "",
+      "details": "",
+      "name": "High Torque Threshold"
     },
     "7969": {
       "description": "Auto-added parameter",
