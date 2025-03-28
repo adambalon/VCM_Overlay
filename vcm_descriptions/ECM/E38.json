@@ -31,6 +31,10 @@
       "description": "",
       "name": "IAT Spark Advance Correction - Mult"
     },
+    "12621": {
+      "description": "",
+      "name": "IAT Spark Advance Correction - Add"
+    },
     "12622": {
       "description": "",
       "name": "EGR Spark Advance Correction - Add"
@@ -42,6 +46,10 @@
     "12625": {
       "description": "",
       "name": "ECT Spark Advance Correction - Mult"
+    },
+    "12628": {
+      "description": "",
+      "name": "IAT Spark Advance Correction - Mult2"
     },
     "12632": {
       "description": "",
@@ -89,12 +97,16 @@
     },
     "12670": {
       "description": "",
-      "details": "boner time",
+      "details": "",
       "name": "Idle Overspeed Spark vs. RPM Error (Coastdown)"
     },
     "12671": {
       "description": "",
       "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12672": {
+      "description": "",
+      "name": "Lightoff Spark Mult vs. ECT"
     },
     "12673": {
       "description": "",
@@ -103,6 +115,10 @@
     "12674": {
       "description": "",
       "name": "Lightoff Spark Mult vs. TPS"
+    },
+    "12676": {
+      "description": "",
+      "name": "Lightoff Spark"
     },
     "12677": {
       "description": "",
