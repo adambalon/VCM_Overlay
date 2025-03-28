@@ -137,15 +137,40 @@
       "details": "Affects the spark/timing during specific load conditions.",
       "name": "SLECT Mult"
     },
+    "12630": {
+      "description": "",
+      "details": "",
+      "name": "Idle Spark Adder vs. ECT (P/N)"
+    },
+    "12631": {
+      "description": "",
+      "details": "",
+      "name": "Idle Spark Adder vs. ECT (In Gear)"
+    },
     "12647": {
       "description": "",
       "details": "",
       "name": "Idle Base Spark vs. RPM vs. CylAir"
     },
+    "12649": {
+      "description": "",
+      "details": "",
+      "name": "Idle Underspeed Spark vs. RPM Error (In Gear)"
+    },
     "12670": {
       "description": "",
-      "details": "Boner",
+      "details": "Boner time",
       "name": "Idle Overspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12671": {
+      "description": "",
+      "details": "",
+      "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)"
+    },
+    "12683": {
+      "description": "",
+      "details": "",
+      "name": "Cranking Spark"
     },
     "12734": {
       "description": "Timing for maximum torque output.",
@@ -156,6 +181,21 @@
       "description": "Auto-added parameter",
       "details": "",
       "name": "Parameter 2007"
+    },
+    "2666": {
+      "description": "",
+      "details": "",
+      "name": "Spark Smoothing Max Torque Delta"
+    },
+    "270": {
+      "description": "",
+      "details": "",
+      "name": "Manual Trans Spark Smoothing (RDSC) Master Enable"
+    },
+    "2786": {
+      "description": "",
+      "details": "",
+      "name": "Bidir Retard Max"
     },
     "7969": {
       "description": "Auto-added parameter",
