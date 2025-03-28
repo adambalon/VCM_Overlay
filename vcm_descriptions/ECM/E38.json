@@ -51,6 +51,10 @@
       "description": "",
       "name": "IAT Spark Advance Correction - Mult2"
     },
+    "12630": {
+      "description": "",
+      "name": "Idle Spark Adder vs. ECT (P/N)"
+    },
     "12632": {
       "description": "",
       "name": "Idle Spark Adder Mult vs. Baro"
@@ -116,6 +120,10 @@
       "description": "",
       "name": "Lightoff Spark Mult vs. TPS"
     },
+    "12675": {
+      "description": "",
+      "name": "Cold Launch Spark"
+    },
     "12676": {
       "description": "",
       "name": "Lightoff Spark"
@@ -152,6 +160,10 @@
       "description": "",
       "name": "Minimum Final Spark"
     },
+    "12703": {
+      "description": "",
+      "name": "Minimum Final Spark Reduced Power Mode"
+    },
     "12704": {
       "description": "",
       "name": "Minimum Final Spark TqMgt"
@@ -172,13 +184,45 @@
       "description": "",
       "name": "Knock Sensor Threshold Min"
     },
+    "2000": {
+      "description": "",
+      "name": "Number Of Cylinders"
+    },
+    "2001": {
+      "description": "",
+      "name": "Cylinder Volume"
+    },
+    "2040": {
+      "description": "",
+      "name": "Tach Output Resolutions - High"
+    },
+    "2041": {
+      "description": "",
+      "name": "Tach Output Resolutions - Low"
+    },
+    "2666": {
+      "description": "",
+      "name": "Spark Smoothing Max Torque Delta"
+    },
     "2668": {
       "description": "",
       "name": "Spark Smoothing Max Torque Loss"
     },
+    "270": {
+      "description": "",
+      "name": "Manual Trans Spark Smoothing (RDSC) Master Enable"
+    },
     "2786": {
       "description": "",
       "name": "Bidir Retard Max"
+    },
+    "32952": {
+      "description": "",
+      "name": "High Torque Threshold"
+    },
+    "701": {
+      "description": "",
+      "name": "Tach Type"
     }
   }
 }

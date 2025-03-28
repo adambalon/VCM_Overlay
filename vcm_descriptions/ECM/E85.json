@@ -5,6 +5,10 @@
     "12661": {
       "description": "",
       "name": "Max Torque Timing Alcohol Adder"
+    },
+    "12678": {
+      "description": "",
+      "name": "Flex Fuel Spark"
     }
   }
 }
