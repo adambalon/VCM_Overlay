@@ -2177,15 +2177,15 @@ Details: {self.param_details_text.toPlainText()}"""
                         }
                         .message {
                             position: relative;
-                            max-width: 70%;
-                            margin: 8px 0;
-                            padding: 10px 15px;
-                            border-radius: 20px;
-                            font-size: 9pt;
-                            line-height: 1.4;
+                            max-width: 75%;
+                            margin: 10px 0;
+                            padding: 12px 16px;
+                            border-radius: 25px;
+                            font-size: 10pt;
+                            line-height: 1.5;
                             word-wrap: break-word;
                             animation: fadeIn 0.3s ease-in-out;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
                         }
                         @keyframes fadeIn {
                             from { opacity: 0; transform: translateY(10px); }
@@ -2195,43 +2195,43 @@ Details: {self.param_details_text.toPlainText()}"""
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
-                            border-bottom-right-radius: 5px;
+                            border-bottom-right-radius: 6px;
                             margin-left: auto;
-                            margin-right: 10px;
+                            margin-right: 14px;
                         }
                         .sent::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            right: -8px;
-                            width: 16px;
-                            height: 16px;
+                            right: -10px;
+                            width: 20px;
+                            height: 20px;
                             background-color: #0B93F6;
-                            border-bottom-left-radius: 15px;
+                            border-bottom-left-radius: 20px;
                             z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
-                            border-bottom-left-radius: 5px;
+                            border-bottom-left-radius: 6px;
                             margin-right: auto;
-                            margin-left: 10px;
+                            margin-left: 14px;
                         }
                         .received::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            left: -8px;
-                            width: 16px;
-                            height: 16px;
+                            left: -10px;
+                            width: 20px;
+                            height: 20px;
                             background-color: #E5E5EA;
-                            border-bottom-right-radius: 15px;
+                            border-bottom-right-radius: 20px;
                             z-index: -1;
                         }
                         .message-info {
-                            font-size: 7pt;
-                            margin-top: 4px;
+                            font-size: 8pt;
+                            margin-top: 6px;
                             opacity: 0.7;
                         }
                         .sent .message-info {
@@ -2346,15 +2346,15 @@ Details: {self.param_details_text.toPlainText()}"""
                         }
                         .message {
                             position: relative;
-                            max-width: 70%;
-                            margin: 8px 0;
-                            padding: 10px 15px;
-                            border-radius: 20px;
-                            font-size: 9pt;
-                            line-height: 1.4;
+                            max-width: 75%;
+                            margin: 10px 0;
+                            padding: 12px 16px;
+                            border-radius: 25px;
+                            font-size: 10pt;
+                            line-height: 1.5;
                             word-wrap: break-word;
                             animation: fadeIn 0.3s ease-in-out;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
                         }
                         @keyframes fadeIn {
                             from { opacity: 0; transform: translateY(10px); }
@@ -2364,43 +2364,43 @@ Details: {self.param_details_text.toPlainText()}"""
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
-                            border-bottom-right-radius: 5px;
+                            border-bottom-right-radius: 6px;
                             margin-left: auto;
-                            margin-right: 10px;
+                            margin-right: 14px;
                         }
                         .sent::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            right: -8px;
-                            width: 16px;
-                            height: 16px;
+                            right: -10px;
+                            width: 20px;
+                            height: 20px;
                             background-color: #0B93F6;
-                            border-bottom-left-radius: 15px;
+                            border-bottom-left-radius: 20px;
                             z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
-                            border-bottom-left-radius: 5px;
+                            border-bottom-left-radius: 6px;
                             margin-right: auto;
-                            margin-left: 10px;
+                            margin-left: 14px;
                         }
                         .received::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            left: -8px;
-                            width: 16px;
-                            height: 16px;
+                            left: -10px;
+                            width: 20px;
+                            height: 20px;
                             background-color: #E5E5EA;
-                            border-bottom-right-radius: 15px;
+                            border-bottom-right-radius: 20px;
                             z-index: -1;
                         }
                         .message-info {
-                            font-size: 7pt;
-                            margin-top: 4px;
+                            font-size: 8pt;
+                            margin-top: 6px;
                             opacity: 0.7;
                         }
                         .sent .message-info {
