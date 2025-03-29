@@ -48,26 +48,38 @@ import urllib.request
 
 import urllib.error
 
+import time
 
+import base64
+
+import tempfile
+
+import threading
+
+from functools import partial
+
+import firebase_service
+
+try:
+    from google.cloud import firestore
+    FIRESTORE_AVAILABLE = True
+except ImportError:
+    FIRESTORE_AVAILABLE = False
 
 # Import Change Log Dialog 
 try:
     from change_log_dialog import ChangeLogDialog
+    CHANGE_LOG_AVAILABLE = True
     print("Change Log Dialog imported successfully")
 except ImportError as e:
-    print(f"Change Log Dialog import failed: {str(e)}")
+    CHANGE_LOG_AVAILABLE = False
+    print(f"Change Log Dialog not available. Error: {str(e)}")
     print("Change Log feature will be disabled.")
 
-
-
 # Import Firebase service module
-try:
-    import firebase_service
-    FIREBASE_AVAILABLE = True
+if FIREBASE_AVAILABLE:
     print("Firebase service successfully imported")
-except ImportError as e:
-    FIREBASE_AVAILABLE = False
-    print(f"Firebase service not available. Error: {str(e)}")
+else:
     print("Authentication and cloud features disabled.")
 
 
@@ -893,6 +905,53 @@ class VCMOverlay(QMainWindow):
         self.git_status_label.setAlignment(Qt.AlignLeft)
         details_field_layout.addWidget(self.git_status_label)
         
+        # Add Parameter Forum section
+        self.forum_container = QWidget()
+        self.forum_container.setObjectName("forumContainer")
+        self.forum_container.setStyleSheet("""
+            #forumContainer {
+                background-color: #111111;
+                border: 1px solid #222222;
+                border-radius: 8px;
+                margin-top: 10px;
+            }
+        """)
+        forum_layout = QVBoxLayout(self.forum_container)
+        forum_layout.setContentsMargins(10, 10, 10, 10)
+        forum_layout.setSpacing(8)
+        
+        # Forum header
+        forum_header = QLabel("Parameter Forum")
+        forum_header.setStyleSheet("""
+            font-size: 10pt;
+            font-weight: bold;
+            color: #CCCCCC;
+            padding: 5px;
+            background-color: #222222;
+            border-radius: 5px;
+        """)
+        forum_layout.addWidget(forum_header)
+        
+        # Forum messages area
+        self.forum_messages = QTextEdit()
+        self.forum_messages.setReadOnly(True)
+        self.forum_messages.setMinimumHeight(150)
+        self.forum_messages.setStyleSheet("""
+            QTextEdit {
+                background-color: #0D0D0D;
+                color: #AAAAAA;
+                border: 1px solid #222222;
+                border-radius: 6px;
+                font-family: Consolas, monospace;
+                line-height: 1.4;
+                padding: 5px;
+            }
+        """)
+        forum_layout.addWidget(self.forum_messages)
+        
+        # Add the forum container to the main layout
+        details_field_layout.addWidget(self.forum_container)
+        
         content_layout.addWidget(param_group, 1)  # Give parameter group a stretch factor of 1
         content_layout.addWidget(details_field_container, 3)  # Give details field a higher stretch factor
         content_layout.addStretch(0)  # Minimal stretch after components to minimize empty space
@@ -1232,7 +1291,10 @@ class VCMOverlay(QMainWindow):
             self.param_details_text.setText(formatted_post)
             # Apply the updated styling
             self.update_param_details_style()
-                
+            
+            # Add to forum messages
+            self.save_to_forum(param_id, user_email, timestamp, param_details)
+            
             # Check if we're admin by trying to find out if it went to parameters or pending
             is_admin = False
             try:
@@ -1389,6 +1451,9 @@ class VCMOverlay(QMainWindow):
     
     def update_parameter_info(self, text):
         """Update the parameter information display with extended fields"""
+        if not hasattr(self, 'last_parameter_text'):
+            self.last_parameter_text = None
+            
         if not text or text == self.last_parameter_text:
             return  # Don't update if no change
         
@@ -1397,14 +1462,17 @@ class VCMOverlay(QMainWindow):
         # If not logged in, don't process parameters
         if not firebase_service.get_current_user():
             self.status_label.setText("LOGIN REQUIRED")
-            self.parameter_header_label.setText("LOGIN REQUIRED")
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setText("LOGIN REQUIRED")
+            self.log_debug("Not logged in")
             return
         
         self.status_label.setText("PARAMETER DETECTED")
         
         # Display the raw parameter text header (either ECM or TCM)
         header_part = text.split()[0] if text.split() else ""
-        self.parameter_header_label.setText(header_part)
+        if hasattr(self, 'parameter_header_label'):
+            self.parameter_header_label.setText(header_part)
         
         # Clear all labels but set a fixed height to prevent layout shifts
         self.param_type_label.setText("")
@@ -1413,6 +1481,7 @@ class VCMOverlay(QMainWindow):
         self.param_desc_label.setText("")
         self.param_details_text.clear()  # Clear the details text box
         self.git_status_label.setText("")  # Clear status message
+        self.forum_messages.clear()  # Clear forum messages
         
         # Extract specific parts
         try:
@@ -1471,6 +1540,10 @@ class VCMOverlay(QMainWindow):
             # Check Firebase for parameter details
             if param_id and FIREBASE_AVAILABLE and firebase_service.get_current_user():
                 self.log_debug(f"Checking Firebase for parameter {param_id}...")
+                
+                # Load forum messages for this parameter
+                self.load_parameter_forum(param_id)
+                
                 try:
                     if firebase_service.firestore_db:
                         # Try to fetch from parameters collection first
@@ -1984,6 +2057,138 @@ Details: {self.param_details_text.toPlainText()}"""
                 color: #AAAAAA;
             }
         """)
+
+    def load_parameter_forum(self, param_id):
+        """Load forum messages for a parameter"""
+        self.forum_messages.clear()
+        self.log_debug(f"Loading forum for parameter {param_id}...")
+        
+        if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
+            self.forum_messages.setText("Forum not available. Please login to access the forum.")
+            return
+        
+        try:
+            # Try to fetch forum posts from Firestore
+            if firebase_service.firestore_db:
+                # Get forum collection for this parameter
+                forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
+                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
+                
+                if forum_posts and len(forum_posts) > 0:
+                    # Process forum posts
+                    forum_text = ""
+                    for post in forum_posts:
+                        post_data = post.to_dict()
+                        user = post_data.get('user', 'Anonymous')
+                        timestamp = post_data.get('timestamp')
+                        content = post_data.get('content', '')
+                        
+                        # Format timestamp
+                        if isinstance(timestamp, datetime.datetime):
+                            timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            timestamp_str = str(timestamp)
+                        
+                        # Add to forum text
+                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
+                    
+                    # Update forum messages
+                    if forum_text:
+                        self.forum_messages.setText(forum_text.strip())
+                        self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
+                    else:
+                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                else:
+                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+            else:
+                # Try to fetch from Realtime Database
+                current_user = firebase_service.get_current_user()
+                db = firebase_service.firebase.database()
+                
+                # Get forum data for this parameter
+                forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
+                
+                if forum_data:
+                    # Process forum posts
+                    forum_text = ""
+                    # Convert to list and sort by timestamp (newest first)
+                    posts = []
+                    for post_id, post_data in forum_data.items():
+                        posts.append(post_data)
+                    
+                    # Sort posts by timestamp (newest first)
+                    posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+                    
+                    for post_data in posts:
+                        user = post_data.get('user', 'Anonymous')
+                        timestamp = post_data.get('timestamp')
+                        content = post_data.get('content', '')
+                        
+                        # Format timestamp
+                        if isinstance(timestamp, (int, float)):
+                            timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
+                            timestamp_str = timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            timestamp_str = str(timestamp)
+                        
+                        # Add to forum text
+                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
+                    
+                    # Update forum messages
+                    if forum_text:
+                        self.forum_messages.setText(forum_text.strip())
+                        self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
+                    else:
+                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                else:
+                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+        
+        except Exception as e:
+            self.log_debug(f"Error loading forum posts: {str(e)}")
+            self.forum_messages.setText(f"Error loading forum posts: {str(e)}")
+    
+    def save_to_forum(self, param_id, user_email, timestamp, content):
+        """Save a new post to the parameter forum"""
+        if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
+            self.log_debug("Cannot save to forum: Firebase not available or user not logged in")
+            return False
+        
+        try:
+            # Prepare post data
+            post_data = {
+                'user': user_email,
+                'content': content,
+                'timestamp': datetime.datetime.now(),
+            }
+            
+            # Save to Firestore
+            if firebase_service.firestore_db:
+                # Create a new document in the parameter's forum collection
+                firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts').add(post_data)
+                self.log_debug(f"Saved post to forum for parameter {param_id}")
+                
+                # Reload forum
+                self.load_parameter_forum(param_id)
+                return True
+            else:
+                # Save to Realtime Database
+                current_user = firebase_service.get_current_user()
+                db = firebase_service.firebase.database()
+                
+                # Convert datetime to timestamp for Realtime DB
+                post_data['timestamp'] = int(datetime.datetime.now().timestamp() * 1000)
+                
+                # Push to parameter forum
+                db.child('parameter_forums').child(param_id).push(post_data, token=current_user['token'])
+                self.log_debug(f"Saved post to forum for parameter {param_id}")
+                
+                # Reload forum
+                self.load_parameter_forum(param_id)
+                return True
+                
+        except Exception as e:
+            self.log_debug(f"Error saving forum post: {str(e)}")
+            return False
 
 
 
