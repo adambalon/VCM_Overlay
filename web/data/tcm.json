@@ -1,9 +1,0 @@
-{
-  "parameters": {
-    "56789": {
-      "name": "Example TCM Parameter",
-      "description": "Parameter description",
-      "details": "Detailed information about this TCM parameter."
-    }
-  }
-} 
