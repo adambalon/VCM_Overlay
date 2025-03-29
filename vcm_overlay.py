@@ -608,7 +608,7 @@ class VCMOverlay(QMainWindow):
         auth_layout.addWidget(self.auth_button)
         
         # Add Change Log button
-        self.change_log_button = QPushButton("Change Log")
+        self.change_log_button = QPushButton("Changes")
         self.change_log_button.setStyleSheet("""
             QPushButton {
                 background-color: #2C3E50;
@@ -1046,7 +1046,7 @@ class VCMOverlay(QMainWindow):
                 self.log_debug("User is an admin, showing admin features")
                 # Create admin button if it doesn't exist
                 if not hasattr(self, 'admin_button') or not self.admin_button:
-                    self.admin_button = QPushButton("Manage Pending")
+                    self.admin_button = QPushButton("Pending")
                     self.admin_button.setStyleSheet("""
                         QPushButton {
                             background-color: #336633;
