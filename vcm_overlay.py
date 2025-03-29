@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 
 """
 
@@ -810,7 +810,7 @@ class VCMOverlay(QMainWindow):
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(8)
         
-        minimize_btn = QPushButton("−")
+        minimize_btn = QPushButton("-")
         minimize_btn.setFixedSize(16, 16)
         minimize_btn.setStyleSheet("""
             QPushButton {
@@ -828,7 +828,7 @@ class VCMOverlay(QMainWindow):
         minimize_btn.clicked.connect(self.showMinimized)
         btn_layout.addWidget(minimize_btn)
         
-        close_btn = QPushButton("×")
+        close_btn = QPushButton("�")
         close_btn.setFixedSize(16, 16)
         close_btn.setStyleSheet("""
             QPushButton {
@@ -1413,7 +1413,7 @@ class VCMOverlay(QMainWindow):
     def save_to_firebase(self):
         """Save current parameter to Firebase"""
         if not FIREBASE_AVAILABLE:
-            self.git_status_label.setText("⚠ Firebase is not available")
+            self.git_status_label.setText("? Firebase is not available")
             return
         
         # Get current user
@@ -1445,12 +1445,12 @@ class VCMOverlay(QMainWindow):
             param_details = param_details.rsplit(" - ", 1)[0]
         
         if not param_id:
-            self.git_status_label.setText("⚠ No parameter selected")
+            self.git_status_label.setText("? No parameter selected")
             return
         
         # Check if details is empty
         if not param_details.strip():
-            self.git_status_label.setText("⚠ Please enter parameter details")
+            self.git_status_label.setText("? Please enter parameter details")
             self.git_status_label.setStyleSheet("color: #FFAA55; font-size: 8pt; font-weight: bold;")
             return
         
@@ -1479,10 +1479,10 @@ class VCMOverlay(QMainWindow):
                 is_admin = False
             
             if is_admin:
-                self.git_status_label.setText(f"✅ Parameter details submitted")
+                self.git_status_label.setText(f"? Parameter details submitted")
                 self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             else:
-                self.git_status_label.setText(f"✨ Your submission is in the forum")
+                self.git_status_label.setText(f"? Your submission is in the forum")
                 self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             
             self.log_debug(f"Added post to forum for parameter {param_id}")
@@ -1490,7 +1490,7 @@ class VCMOverlay(QMainWindow):
             # Clear the details box after successful submission
             self.param_details_text.clear()
         else:
-            self.git_status_label.setText(f"⚠ Failed to save to forum")
+            self.git_status_label.setText(f"? Failed to save to forum")
             self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt;")
             self.log_debug(f"Failed to save to forum: {param_id}")
 
@@ -1717,7 +1717,7 @@ class VCMOverlay(QMainWindow):
                 self.log_debug(f"Loading forum for parameter {param_id}...")
                 self.load_parameter_forum(param_id)
                 # Set the status message
-                self.git_status_label.setText("✏️ Enter parameter details above")
+                self.git_status_label.setText("?? Enter parameter details above")
                 self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
 
             # Update the param info text in the debug window
@@ -1795,7 +1795,7 @@ Details: {self.param_details_text.toPlainText()}"""
         param_id = self.param_id_label.text().strip()
 
         if not param_id:
-            self.git_status_label.setText("⚠ No parameter selected")
+            self.git_status_label.setText("? No parameter selected")
             self.git_status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
             return
             
@@ -1805,7 +1805,7 @@ Details: {self.param_details_text.toPlainText()}"""
         if " - Approved" in current_details:
             # Set approved style
             self.mark_as_approved(param_id, get_ecm_type_from_text(self.last_parameter_text))
-            self.git_status_label.setText("✅ This parameter has been approved")
+            self.git_status_label.setText("? This parameter has been approved")
             self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             return
             
@@ -1820,12 +1820,12 @@ Details: {self.param_details_text.toPlainText()}"""
                     font-family: Consolas, monospace;
                 }
             """)
-            self.git_status_label.setText("❌ This parameter has been rejected")
+            self.git_status_label.setText("? This parameter has been rejected")
             self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt; font-weight: bold;")
             return
             
         # No status indicator
-        self.git_status_label.setText("📝 Parameter details saved locally")
+        self.git_status_label.setText("?? Parameter details saved locally")
         self.git_status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
 
     def mark_as_approved(self, param_id, ecm_type):
@@ -2220,8 +2220,115 @@ Details: {self.param_details_text.toPlainText()}"""
                         border-radius: 8px;
                         display: flex;
                         align-items: center;
-                        justify-content: space-between;
+                        justify-content: center;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                        border: 1px solid #FFFFFF;
+                    }
+                    
+                    .forum-title {
+                        color: #FFFFFF;
+                        font-weight: 700;
+                        font-size: 16px;
+                        letter-spacing: 0.5px;
+                    }
+                    
+                    .post-count {
+                        display: none;
+                    }
+                    
+                    .posts-container {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 40px;
+                    }
+                    
+                    .post {
+                        background-color: #18181B;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                        border: 1px solid #FFFFFF;
+                    }
+                    
+                    .post.current-user {
+                        box-shadow: 0 0 0 1px #FF6600;
+                        border: 1px solid #FFFFFF;
+                    }
+                    
+                    .post-header {
+                        background-color: #26262C;
+                        padding: 16px 20px;
+                        border-bottom: 1px solid #38383E;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    
+                    .username {
+                        font-weight: 600;
+                        color: #FFFFFF;
+                        font-size: 15px;
+                    }
+                    
+                    .post-time {
+                        font-size: 12px;
+                        color: #8C8C95;
+                    }
+                    
+                    .post-content {
+                        padding: 22px;
+                        color: #DDDDDD;
+                        font-size: 14px;
+                        line-height: 1.6;
+                    }
+                    
+                    .post-content p {
+                        margin-bottom: 12px;
+                    }
+                    
+                    .post-content p:last-child {
+                        margin-bottom: 0;
+                    }
+                    
+                    .post-footer {
+                        background-color: #1E1E24;
+                        padding: 12px 20px;
+                        border-top: 1px solid #38383E;
+                        display: flex;
+                        align-items: center;
+                    }
+                    
+                    .status-label {
+                        font-size: 13px;
+                        color: #8C8C95;
+                        margin-right: 10px;
+                    }
+                    
+                    .status-value {
+                        font-size: 13px;
+                        font-weight: 600;
+                    }
+                    
+                    .status-pending {
+                        color: #FFD700;
+                    }
+                    
+                    .status-accepted {
+                        color: #4CAF50;
+                    }
+                    
+                    .status-rejected {
+                        color: #F44336;
+                    }
+                    
+                    /* Empty state */
+                    .empty-state {
+                        padding: 50px 20px;
+                        text-align: center;
+                        background-color: #18181B;
+                        border-radius: 8px;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                        border: 1px solid #FFFFFF;
                     }
                     
                     .forum-title {
@@ -2237,7 +2344,8 @@ Details: {self.param_details_text.toPlainText()}"""
                         text-align: center;
                         background-color: #18181B;
                         border-radius: 8px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                        border: 1px solid #FFFFFF;
                     }
                     
                     .login-title {
@@ -2312,8 +2420,9 @@ Details: {self.param_details_text.toPlainText()}"""
                                 border-radius: 8px;
                                 display: flex;
                                 align-items: center;
-                                justify-content: space-between;
+                                justify-content: center;
                                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                                border: 1px solid #FFFFFF;
                             }
                             
                             .forum-title {
@@ -2342,7 +2451,7 @@ Details: {self.param_details_text.toPlainText()}"""
                                 background-color: #18181B;
                                 border-radius: 8px;
                                 overflow: hidden;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
                             }
                             
                             .post.current-user {
@@ -2354,7 +2463,7 @@ Details: {self.param_details_text.toPlainText()}"""
                                 padding: 16px 20px;
                                 border-bottom: 1px solid #38383E;
                                 display: flex;
-                                justify-content: space-between;
+                                justify-content: center;
                                 align-items: center;
                             }
                             
@@ -2421,7 +2530,8 @@ Details: {self.param_details_text.toPlainText()}"""
                                 text-align: center;
                                 background-color: #18181B;
                                 border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                                border: 1px solid #FFFFFF;
                             }
                             
                             .empty-title {
@@ -2442,7 +2552,8 @@ Details: {self.param_details_text.toPlainText()}"""
                                 text-align: center;
                                 background-color: #18181B;
                                 border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                                border: 1px solid #FFFFFF;
                             }
                             
                             .error-title {
@@ -2581,8 +2692,9 @@ Details: {self.param_details_text.toPlainText()}"""
                                 border-radius: 8px;
                                 display: flex;
                                 align-items: center;
-                                justify-content: space-between;
+                                justify-content: center;
                                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                                border: 1px solid #FFFFFF;
                             }
                             
                             .forum-title {
@@ -2607,7 +2719,8 @@ Details: {self.param_details_text.toPlainText()}"""
                                 text-align: center;
                                 background-color: #18181B;
                                 border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                                border: 1px solid #FFFFFF;
                             }
                             
                             .empty-title {
@@ -2672,8 +2785,9 @@ Details: {self.param_details_text.toPlainText()}"""
                         border-radius: 8px;
                         display: flex;
                         align-items: center;
-                        justify-content: space-between;
+                        justify-content: center;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                        border: 1px solid #FFFFFF;
                     }
                     
                     .forum-title {
@@ -2689,7 +2803,8 @@ Details: {self.param_details_text.toPlainText()}"""
                         text-align: center;
                         background-color: #18181B;
                         border-radius: 8px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
+                        border: 1px solid #FFFFFF;
                     }
                     
                     .error-title {
