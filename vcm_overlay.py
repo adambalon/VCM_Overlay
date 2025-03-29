@@ -58,6 +58,18 @@ import threading
 
 from functools import partial
 
+import win32gui
+import win32con
+import win32api
+import ctypes
+import sys
+import os
+import json
+import time
+import datetime
+import re
+import random
+
 # Import Firebase service module
 try:
     import firebase_service
