@@ -1134,6 +1134,10 @@ class VCMOverlay(QMainWindow):
         self.forum_posts_layout = QVBoxLayout(self.forum_posts_container)
         self.forum_posts_layout.setContentsMargins(10, 10, 10, 10)
         self.forum_posts_layout.setSpacing(16)  # Space between posts
+        
+        # Configure scroll area to prevent horizontal scrolling
+        self.forum_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.forum_scroll_area.setWidgetResizable(True)
         self.forum_scroll_area.setWidget(self.forum_posts_container)
         
         # Hide the QTextEdit and add the scroll area
@@ -2206,6 +2210,13 @@ Details: {self.param_details_text.toPlainText()}"""
         self.clear_forum_posts()
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
+        # Set up forum posts layout to prevent horizontal scrolling
+        if hasattr(self, 'forum_posts_layout'):
+            # Make sure the layout has no horizontal scrollbar
+            if hasattr(self, 'forum_scroll_area'):
+                self.forum_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+                self.forum_scroll_area.setWidgetResizable(True)
+        
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
             self.show_login_required_message()
             return
@@ -2291,14 +2302,17 @@ Details: {self.param_details_text.toPlainText()}"""
         
         # Set style based on user
         border_style = ""
+        post_margin = "margin: 0 0 10px 0;"
+        
         if is_current_user:
-            border_style = "border-left: 3px solid #555555; margin: 0;"
+            border_style = "border-left: 3px solid #555555;"
+            post_margin = "margin: 0 0 10px 0; padding-left: 0;"
         
         post_widget.setStyleSheet(f"""
             QFrame {{
                 background-color: #1A1A1A;
                 border-radius: 4px;
-                margin-bottom: 10px;
+                {post_margin}
                 {border_style}
             }}
         """)
@@ -2423,6 +2437,7 @@ Details: {self.param_details_text.toPlainText()}"""
             line-height: 1.5;
             padding: 15px;
             background-color: #1A1A1A;
+            max-width: 100%;
         """)
         content_widget.setTextFormat(Qt.RichText)
         
