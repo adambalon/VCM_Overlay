@@ -968,6 +968,14 @@ class VCMOverlay(QMainWindow):
             self.auth_button.setText("Logout")
             self.save_to_cloud_button.setEnabled(True)
             
+            # Clear parameter fields for a fresh start after login
+            self.param_id_label.setText("")
+            self.param_name_label.setText("")
+            self.param_desc_label.setText("")
+            self.param_details_text.clear()
+            self.parameter_header_label.setText("Parameter detection active")
+            self.git_status_label.setText("Ready for parameter detection")
+            
             # Enable parameter fields
             self.param_details_text.setReadOnly(False)
             self.param_details_text.setStyleSheet("""
@@ -1043,6 +1051,14 @@ class VCMOverlay(QMainWindow):
             self.auth_button.setText("Login")
             self.save_to_cloud_button.setEnabled(False)
             
+            # Clear parameter fields when logging out
+            self.param_id_label.setText("")
+            self.param_name_label.setText("")
+            self.param_desc_label.setText("")
+            self.param_details_text.clear()
+            self.parameter_header_label.setText("LOGIN REQUIRED")
+            self.git_status_label.setText("")
+            
             # Disable parameter fields
             self.param_details_text.setReadOnly(True)
             self.param_details_text.setStyleSheet("""
@@ -1061,13 +1077,6 @@ class VCMOverlay(QMainWindow):
                 font-weight: bold; 
                 color: #555555; /* Dimmed text color */
             """)
-            
-            # Clear parameter fields
-            self.param_id_label.setText("")
-            self.param_name_label.setText("")
-            self.param_desc_label.setText("")
-            self.param_details_text.clear()
-            self.parameter_header_label.setText("LOGIN REQUIRED")
             
             # Hide admin button if it exists
             if hasattr(self, 'admin_button') and self.admin_button:
