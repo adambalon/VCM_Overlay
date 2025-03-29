@@ -2162,65 +2162,103 @@ Details: {self.param_details_text.toPlainText()}"""
                     # Process forum posts
                     html_content = """
                     <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background-color: #000000;
+                        }
                         .chat-container {
                             display: flex;
                             flex-direction: column;
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                            padding: 10px;
+                            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoAQMAAAC2MCouAAAABlBMVEXd3d3///9DNpXLAAAAAnRSTlP/AOW3MEoAAAABiUlEQVQY02P4DwQNDBAGkNPAwMALYTRCaAYGtv//GWQZGDJgTAaGmP//Pw5gYHAEMv5r/v/9dQCE+e/f/++/GRgkvjMw2P///+8Aw/9pQJXrGRheM0CYvz4wMExgYLjBAGH+mMDA8J6B4cF/KPM/JPhrA4Q5m4GB4QEDw8MFEOYD51n/v1rP8P89xND/nxkY/i9nYHj/Ecr8/38GRDUcOHDgwIEDBw4cOHDgwIEDBw4cOPyHgP0MEOYfBojz/0GZ/9noGGQZGNgYGKQYGPgYGOQYGCYzMEgzMCxigDB3MkCY+xggzP0MEOYCBghzJQQEvQYChmsMDIJQ5n8Ghv1AqRkMDP8YIMyTDAwzGBheMzC8YTDY//3+AoL///D/e38GiP7//0//f/5ngIT/nf9//wEy//+DMP//hxr2GQI+M0CYtxkgzN0MEOYBBgjzLAOE+ZCB4QTD/zMMEBVPgOL/QeI/wOrBACiPwGDAgQMHDhw4cODAgcN/CPgABEIIBgCZTAiL6TYbQAAAAABJRU5ErkJggg==');
+                            background-color: #0a0a0a;
                         }
                         .message {
-                            max-width: 80%;
-                            margin: 4px 8px;
-                            padding: 8px 12px;
-                            border-radius: 18px;
+                            position: relative;
+                            max-width: 70%;
+                            margin: 8px 0;
+                            padding: 10px 15px;
+                            border-radius: 20px;
                             font-size: 9pt;
                             line-height: 1.4;
                             word-wrap: break-word;
+                            animation: fadeIn 0.3s ease-in-out;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                        }
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
                         }
                         .sent {
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
                             border-bottom-right-radius: 5px;
+                            margin-left: auto;
+                            margin-right: 10px;
+                        }
+                        .sent::after {
+                            content: "";
+                            position: absolute;
+                            bottom: 0;
+                            right: -8px;
+                            width: 16px;
+                            height: 16px;
+                            background-color: #0B93F6;
+                            border-bottom-left-radius: 15px;
+                            z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
                             border-bottom-left-radius: 5px;
+                            margin-right: auto;
+                            margin-left: 10px;
+                        }
+                        .received::after {
+                            content: "";
+                            position: absolute;
+                            bottom: 0;
+                            left: -8px;
+                            width: 16px;
+                            height: 16px;
+                            background-color: #E5E5EA;
+                            border-bottom-right-radius: 15px;
+                            z-index: -1;
                         }
                         .message-info {
                             font-size: 7pt;
-                            margin-top: 2px;
+                            margin-top: 4px;
                             opacity: 0.7;
                         }
                         .sent .message-info {
                             text-align: right;
-                            color: rgba(255, 255, 255, 0.7);
+                            color: rgba(255, 255, 255, 0.8);
                         }
                         .received .message-info {
-                            color: rgba(0, 0, 0, 0.5);
+                            color: rgba(0, 0, 0, 0.6);
                         }
                         .timestamp {
                             text-align: center;
                             color: #8e8e93;
                             font-size: 8pt;
                             margin: 15px 0 5px 0;
+                            opacity: 0.8;
                         }
                         .day-divider {
                             text-align: center;
-                            color: #8e8e93;
+                            background-color: rgba(142, 142, 147, 0.2);
+                            color: #FFFFFF;
                             font-size: 8pt;
-                            margin: 15px 0;
-                            position: relative;
-                        }
-                        .day-divider::before, .day-divider::after {
-                            content: "";
-                            display: inline-block;
-                            width: 40%;
-                            height: 1px;
-                            background: rgba(142, 142, 147, 0.3);
-                            vertical-align: middle;
-                            margin: 0 10px;
+                            margin: 20px auto;
+                            padding: 5px 10px;
+                            border-radius: 20px;
+                            width: fit-content;
+                            opacity: 0.8;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                         }
                     </style>
                     <div class="chat-container">
@@ -2246,7 +2284,7 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Format timestamp
                         if isinstance(timestamp, datetime.datetime):
                             current_date = timestamp.strftime("%Y-%m-%d")
-                            time_str = timestamp.strftime("%I:%M %p")
+                            time_str = timestamp.strftime("%I:%M %p").lstrip('0')
                             
                             # Add date divider if it's a new day
                             if last_date != current_date:
@@ -2276,6 +2314,8 @@ Details: {self.param_details_text.toPlainText()}"""
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
+                    # Scroll to the bottom to see newest messages
+                    self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
                     self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
                 else:
                     self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
@@ -2291,65 +2331,103 @@ Details: {self.param_details_text.toPlainText()}"""
                     # Process forum posts
                     html_content = """
                     <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background-color: #000000;
+                        }
                         .chat-container {
                             display: flex;
                             flex-direction: column;
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                            padding: 10px;
+                            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoAQMAAAC2MCouAAAABlBMVEXd3d3///9DNpXLAAAAAnRSTlP/AOW3MEoAAAABiUlEQVQY02P4DwQNDBAGkNPAwMALYTRCaAYGtv//GWQZGDJgTAaGmP//Pw5gYHAEMv5r/v/9dQCE+e/f/++/GRgkvjMw2P///+8Aw/9pQJXrGRheM0CYvz4wMExgYLjBAGH+mMDA8J6B4cF/KPM/JPhrA4Q5m4GB4QEDw8MFEOYD51n/v1rP8P89xND/nxkY/i9nYHj/Ecr8/38GRDUcOHDgwIEDBw4cOHDgwIEDBw4cOPyHgP0MEOYfBojz/0GZ/9noGGQZGNgYGKQYGPgYGOQYGCYzMEgzMCxigDB3MkCY+xggzP0MEOYCBghzJQQEvQYChmsMDIJQ5n8Ghv1AqRkMDP8YIMyTDAwzGBheMzC8YTDY//3+AoL///D/e38GiP7//0//f/5ngIT/nf9//wEy//+DMP//hxr2GQI+M0CYtxkgzN0MEOYBBgjzLAOE+ZCB4QTD/zMMEBVPgOL/QeI/wOrBACiPwGDAgQMHDhw4cODAgcN/CPgABEIIBgCZTAiL6TYbQAAAAABJRU5ErkJggg==');
+                            background-color: #0a0a0a;
                         }
                         .message {
-                            max-width: 80%;
-                            margin: 4px 8px;
-                            padding: 8px 12px;
-                            border-radius: 18px;
+                            position: relative;
+                            max-width: 70%;
+                            margin: 8px 0;
+                            padding: 10px 15px;
+                            border-radius: 20px;
                             font-size: 9pt;
                             line-height: 1.4;
                             word-wrap: break-word;
+                            animation: fadeIn 0.3s ease-in-out;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                        }
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
                         }
                         .sent {
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
                             border-bottom-right-radius: 5px;
+                            margin-left: auto;
+                            margin-right: 10px;
+                        }
+                        .sent::after {
+                            content: "";
+                            position: absolute;
+                            bottom: 0;
+                            right: -8px;
+                            width: 16px;
+                            height: 16px;
+                            background-color: #0B93F6;
+                            border-bottom-left-radius: 15px;
+                            z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
                             border-bottom-left-radius: 5px;
+                            margin-right: auto;
+                            margin-left: 10px;
+                        }
+                        .received::after {
+                            content: "";
+                            position: absolute;
+                            bottom: 0;
+                            left: -8px;
+                            width: 16px;
+                            height: 16px;
+                            background-color: #E5E5EA;
+                            border-bottom-right-radius: 15px;
+                            z-index: -1;
                         }
                         .message-info {
                             font-size: 7pt;
-                            margin-top: 2px;
+                            margin-top: 4px;
                             opacity: 0.7;
                         }
                         .sent .message-info {
                             text-align: right;
-                            color: rgba(255, 255, 255, 0.7);
+                            color: rgba(255, 255, 255, 0.8);
                         }
                         .received .message-info {
-                            color: rgba(0, 0, 0, 0.5);
+                            color: rgba(0, 0, 0, 0.6);
                         }
                         .timestamp {
                             text-align: center;
                             color: #8e8e93;
                             font-size: 8pt;
                             margin: 15px 0 5px 0;
+                            opacity: 0.8;
                         }
                         .day-divider {
                             text-align: center;
-                            color: #8e8e93;
+                            background-color: rgba(142, 142, 147, 0.2);
+                            color: #FFFFFF;
                             font-size: 8pt;
-                            margin: 15px 0;
-                            position: relative;
-                        }
-                        .day-divider::before, .day-divider::after {
-                            content: "";
-                            display: inline-block;
-                            width: 40%;
-                            height: 1px;
-                            background: rgba(142, 142, 147, 0.3);
-                            vertical-align: middle;
-                            margin: 0 10px;
+                            margin: 20px auto;
+                            padding: 5px 10px;
+                            border-radius: 20px;
+                            width: fit-content;
+                            opacity: 0.8;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                         }
                     </style>
                     <div class="chat-container">
@@ -2382,7 +2460,7 @@ Details: {self.param_details_text.toPlainText()}"""
                         if isinstance(timestamp, (int, float)):
                             timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
                             current_date = timestamp_dt.strftime("%Y-%m-%d")
-                            time_str = timestamp_dt.strftime("%I:%M %p")
+                            time_str = timestamp_dt.strftime("%I:%M %p").lstrip('0')
                             
                             # Add date divider if it's a new day
                             if last_date != current_date:
@@ -2412,6 +2490,8 @@ Details: {self.param_details_text.toPlainText()}"""
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
+                    # Scroll to the bottom to see newest messages
+                    self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
                     self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
                     self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
