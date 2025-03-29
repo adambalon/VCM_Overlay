@@ -2187,7 +2187,63 @@ Details: {self.param_details_text.toPlainText()}"""
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
-            self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:40px 20px;background-color:#1E1E1E;border:1px solid #333333;border-radius:12px;margin:20px;'>Forum not available. Please login to access the forum.</div>")
+            self.forum_messages.setHtml("""
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+                    
+                    body {
+                        background-color: #121212;
+                        margin: 0;
+                        padding: 15px;
+                        font-family: 'Roboto', sans-serif;
+                        font-size: 14px;
+                        color: #DDDDDD;
+                        line-height: 1.5;
+                    }
+                    
+                    .forum-header {
+                        background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+                        color: #00C6FF;
+                        padding: 15px 20px;
+                        font-weight: 500;
+                        font-size: 16px;
+                        margin-bottom: 25px;
+                        letter-spacing: 0.5px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                        border-radius: 8px;
+                        border-left: 4px solid #888888;
+                    }
+                    
+                    .login-message {
+                        padding: 50px 20px;
+                        text-align: center;
+                        color: #AAAAAA;
+                        font-size: 15px;
+                        background-color: #1A1A1A;
+                        border-radius: 10px;
+                        margin-top: 10px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                        border: 1px solid #333333;
+                    }
+                    
+                    .login-icon {
+                        font-size: 40px;
+                        margin-bottom: 15px;
+                        color: #888888;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="forum-header">Parameter Forum</div>
+                <div class="login-message">
+                    <div class="login-icon">🔒</div>
+                    <div>Forum not available. Please login to access the forum.</div>
+                </div>
+            </body>
+            </html>
+            """)
             return
         
         try:
@@ -2201,99 +2257,158 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Create vBulletin-style forum layout
+                    # Create modern, cool forum layout
                     html_content = """
                     <html>
                     <head>
                         <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+                            
                             body {
                                 background-color: #121212;
                                 margin: 0;
-                                padding: 10px;
-                                font-family: Arial, sans-serif;
-                                font-size: 13px;
-                                color: #DDDDDD;
-                            }
-                            .forum-header {
-                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
-                                color: #00AAFF;
-                                padding: 8px 12px;
-                                font-weight: bold;
-                                border-radius: 5px 5px 0 0;
+                                padding: 15px;
+                                font-family: 'Roboto', sans-serif;
                                 font-size: 14px;
-                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
-                                margin-bottom: 20px;
+                                color: #DDDDDD;
+                                line-height: 1.5;
                             }
+                            
+                            .forum-header {
+                                background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+                                color: #00C6FF;
+                                padding: 15px 20px;
+                                font-weight: 500;
+                                font-size: 16px;
+                                margin-bottom: 25px;
+                                letter-spacing: 0.5px;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                                border-radius: 8px;
+                                border-left: 4px solid #00C6FF;
+                                position: relative;
+                            }
+                            
                             .forum-wrapper {
                                 border: none;
                                 background-color: transparent;
                                 margin-bottom: 15px;
                             }
+                            
                             .forum-thread {
-                                margin-bottom: 0;
-                                padding: 10px;
+                                padding: 5px;
                             }
+                            
                             .post {
-                                border: 1px solid #333333;
-                                padding: 0;
-                                margin: 0 0 40px 0;
-                                border-radius: 12px;
-                                box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                                margin: 0 0 30px 0;
+                                border: none;
+                                border-radius: 10px;
                                 overflow: hidden;
+                                position: relative;
+                                transition: all 0.2s ease;
+                                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                             }
+                            
+                            .post:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+                            }
+                            
                             .post:last-child {
-                                margin-bottom: 20px;
+                                margin-bottom: 15px;
                             }
+                            
                             .post-header {
-                                background-color: #252525;
-                                padding: 8px 12px;
-                                font-size: 12px;
-                                border-bottom: 1px solid #333333;
-                                color: #AAAAAA;
-                                border-radius: 12px 12px 0 0;
-                            }
-                            .post-date {
-                                float: right;
-                                color: #999999;
-                            }
-                            .post-content {
+                                background: linear-gradient(135deg, #2A2A2A 0%, #222222 100%);
                                 padding: 12px 15px;
-                                line-height: 1.5;
+                                font-size: 13px;
+                                color: #BBBBBB;
+                                border-bottom: 1px solid #333;
+                                border-radius: 10px 10px 0 0;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
                             }
+                            
+                            .post-date {
+                                color: #888888;
+                                font-size: 12px;
+                            }
+                            
+                            .post-author {
+                                font-weight: 500;
+                                color: #DDDDDD;
+                            }
+                            
                             .post-content-wrapper {
                                 display: flex;
-                                margin-bottom: 0;
-                                background-color: #1A1A1A;
+                                background: #1A1A1A;
                                 border-radius: 0 0 10px 10px;
-                                box-shadow: none;
                             }
+                            
                             .post-userinfo {
-                                background-color: #1C1C1C;
-                                border-right: 1px solid #333333;
+                                background: linear-gradient(180deg, #222222 0%, #1C1C1C 100%);
                                 width: 120px;
-                                padding: 12px;
-                                color: #BBBBBB;
-                                font-size: 12px;
-                            }
-                            .post-userinfo-name {
-                                font-weight: bold;
-                                color: #00AAFF;
-                                margin-bottom: 6px;
-                                font-size: 13px;
-                            }
-                            .post-body {
                                 padding: 15px;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                border-right: 1px solid #333;
+                            }
+                            
+                            .user-avatar {
+                                width: 60px;
+                                height: 60px;
+                                background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+                                border-radius: 50%;
+                                margin-bottom: 10px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 24px;
+                                font-weight: 500;
+                                color: white;
+                                text-transform: uppercase;
+                            }
+                            
+                            .post-userinfo-name {
+                                font-weight: 500;
+                                color: #FFFFFF;
+                                font-size: 14px;
+                                text-align: center;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .post-body {
+                                padding: 20px;
                                 flex-grow: 1;
+                                background-color: #1A1A1A;
+                                color: #DDDDDD;
+                                line-height: 1.6;
                             }
-                            .current-user .post-userinfo-name {
-                                color: #FF9900;
-                            }
-                            .current-user .post-userinfo {
-                                background-color: #232323;
-                            }
+                            
                             .current-user .post-header {
-                                background-color: #2B2B2B;
-                                color: #BBBBBB;
+                                background: linear-gradient(135deg, #2D2D2D 0%, #252525 100%);
+                                border-top: 2px solid #FF9500;
+                            }
+                            
+                            .current-user .user-avatar {
+                                background: linear-gradient(135deg, #FF9500 0%, #FF5F6D 100%);
+                            }
+                            
+                            .current-user .post-userinfo {
+                                background: linear-gradient(180deg, #252525 0%, #1F1F1F 100%);
+                            }
+                            
+                            .empty-message {
+                                padding: 40px 20px;
+                                text-align: center;
+                                color: #999999;
+                                font-size: 14px;
+                                background-color: #1E1E1E;
+                                border: 1px solid #333333;
+                                border-radius: 10px;
+                                margin-top: 20px;
+                                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                             }
                         </style>
                     </head>
@@ -2341,19 +2456,19 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Generate random stats for vBulletin style
-                        user_title = "VCM Expert" if is_current_user else "Forum Member"
-                        joined_date = "January 2023"
-                        post_count = random.randint(10, 500)
+                        # Get first letter of display name for avatar
+                        avatar_initial = display_name[0].upper() if display_name else "?"
                         
-                        # Create a vBulletin-style post
+                        # Create a modern post
                         html_content += f"""
                         <div class="post {current_user_class}">
                             <div class="post-header">
+                                <span class="post-author">{display_name}</span>
                                 <span class="post-date">{full_time}</span>
                             </div>
                             <div class="post-content-wrapper">
                                 <div class="post-userinfo">
+                                    <div class="user-avatar">{avatar_initial}</div>
                                     <div class="post-userinfo-name">{display_name}</div>
                                 </div>
                                 <div class="post-body">
@@ -2368,77 +2483,6 @@ Details: {self.param_details_text.toPlainText()}"""
                         </div>
                     </body>
                     </html>
-                    """
-                    
-                    # Update forum messages
-                    self.forum_messages.setHtml(html_content)
-                    # Scroll to the top for forum style
-                    self.forum_messages.verticalScrollBar().setValue(0)
-                    self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
-                else:
-                    self.forum_messages.setHtml("""
-                    <html>
-                    <head>
-                        <style>
-                            body {
-                                background-color: #121212;
-                                margin: 0;
-                                padding: 10px;
-                                font-family: Arial, sans-serif;
-                                font-size: 13px;
-                                color: #DDDDDD;
-                            }
-                            .forum-header {
-                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
-                                color: #00AAFF;
-                                padding: 8px 12px;
-                                font-weight: bold;
-                                border-radius: 5px 5px 0 0;
-                                font-size: 14px;
-                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
-                                margin-bottom: 20px;
-                            }
-                            .forum-wrapper {
-                                border: none;
-                                background-color: transparent;
-                                margin-bottom: 15px;
-                            }
-                            .forum-thread {
-                                margin-bottom: 0;
-                                padding: 10px;
-                            }
-                            .post {
-                                border: 1px solid #333333;
-                                padding: 0;
-                                margin: 0 0 40px 0;
-                                border-radius: 12px;
-                                box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-                                overflow: hidden;
-                            }
-                            .post:last-child {
-                                margin-bottom: 20px;
-                            }
-                            .empty-message {
-                                padding: 40px 20px;
-                                text-align: center;
-                                color: #999999;
-                                font-size: 14px;
-                                background-color: #1E1E1E;
-                                border: 1px solid #333333;
-                                border-radius: 12px;
-                                margin-top: 20px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="forum-wrapper">
-                            <div class="forum-header">Parameter Forum - Discussion</div>
-                            <div class="empty-message">
-                                No forum posts yet. Save a parameter to start the conversation.
-                            </div>
-                        </div>
-                    </body>
-                    </html>
                     """)
         
         except Exception as e:
@@ -2447,49 +2491,55 @@ Details: {self.param_details_text.toPlainText()}"""
             <html>
             <head>
                 <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+                    
                     body {{
                         background-color: #121212;
                         margin: 0;
-                        padding: 10px;
-                        font-family: Arial, sans-serif;
-                        font-size: 13px;
-                        color: #DDDDDD;
-                    }}
-                    .forum-header {{
-                        background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
-                        color: #00AAFF;
-                        padding: 8px 12px;
-                        font-weight: bold;
-                        border-radius: 5px 5px 0 0;
-                        border: 1px solid #333333;
+                        padding: 15px;
+                        font-family: 'Roboto', sans-serif;
                         font-size: 14px;
-                        text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                        color: #DDDDDD;
+                        line-height: 1.5;
                     }}
-                    .forum-wrapper {{
-                        border: 1px solid #333333;
-                        border-radius: 5px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                        background-color: #1E1E1E;
-                        margin-bottom: 15px;
+                    
+                    .forum-header {{
+                        background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+                        color: #00C6FF;
+                        padding: 15px 20px;
+                        font-weight: 500;
+                        font-size: 16px;
+                        margin-bottom: 25px;
+                        letter-spacing: 0.5px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                        border-radius: 8px;
+                        border-left: 4px solid #FF5F6D;
                     }}
+                    
                     .error-message {{
-                        padding: 40px 20px;
+                        padding: 50px 20px;
                         text-align: center;
                         color: #FF6666;
-                        font-size: 14px;
-                        background-color: #1E1E1E;
+                        font-size: 15px;
+                        background-color: #1A1A1A;
+                        border-radius: 10px;
+                        margin-top: 10px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                         border: 1px solid #333333;
-                        border-radius: 12px;
-                        margin-top: 20px;
+                    }}
+                    
+                    .error-icon {{
+                        font-size: 40px;
+                        margin-bottom: 15px;
+                        color: #FF5F6D;
                     }}
                 </style>
             </head>
             <body>
-                <div class="forum-wrapper">
-                    <div class="forum-header">Parameter Forum - Error</div>
-                    <div class="error-message">
-                        Error loading forum posts: {str(e)}
-                    </div>
+                <div class="forum-header">Parameter Forum - Error</div>
+                <div class="error-message">
+                    <div class="error-icon">⚠️</div>
+                    <div>Error loading forum posts: {str(e)}</div>
                 </div>
             </body>
             </html>
