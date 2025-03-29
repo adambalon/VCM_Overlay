@@ -2329,6 +2329,10 @@ Details: {self.param_details_text.toPlainText()}"""
                                 background-color: #111111;
                                 border-left: 3px solid #333;
                                 margin-bottom: 12px;
+                                border-radius: 6px;
+                                overflow: hidden;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                                border: 1px solid #1A1A1A;
                             }
                             
                             .post.current-user {
@@ -2406,6 +2410,10 @@ Details: {self.param_details_text.toPlainText()}"""
                                 background-color: #111;
                                 border-left: 3px solid #333;
                                 text-align: center;
+                                border-radius: 6px;
+                                overflow: hidden;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                                border: 1px solid #1A1A1A;
                             }
                             
                             .empty-title {
@@ -2426,6 +2434,10 @@ Details: {self.param_details_text.toPlainText()}"""
                                 background-color: #111;
                                 border-left: 3px solid #CC3333;
                                 text-align: center;
+                                border-radius: 6px;
+                                overflow: hidden;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                                border: 1px solid #1A1A1A;
                             }
                             
                             .error-title {
@@ -2571,6 +2583,10 @@ Details: {self.param_details_text.toPlainText()}"""
                                 background-color: #111;
                                 border-left: 3px solid #333;
                                 text-align: center;
+                                border-radius: 6px;
+                                overflow: hidden;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                                border: 1px solid #1A1A1A;
                             }
                             
                             .empty-title {
