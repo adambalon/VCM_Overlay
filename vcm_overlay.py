@@ -507,6 +507,9 @@ class VCMOverlay(QMainWindow):
                 self.log_debug("Firebase initialized successfully")
                 # Now that UI is initialized, update auth status
                 self.update_auth_status()
+                
+                # Clean up parameters collection
+                self.clean_parameters_collection()
             else:
                 self.log_debug("Firebase initialization failed")
 
@@ -1266,42 +1269,21 @@ class VCMOverlay(QMainWindow):
             self.git_status_label.setText("⚠ No parameter selected")
             return
         
+        # Check if details is empty
+        if not param_details.strip():
+            self.git_status_label.setText("⚠ Please enter parameter details")
+            self.git_status_label.setStyleSheet("color: #FFAA55; font-size: 8pt; font-weight: bold;")
+            return
+        
         # Get current details to append submission as forum post
         user_email = current_user.get('email', 'Anonymous')
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Format the new submission as a forum post (store the formatted version separately)
-        forum_post = self.format_forum_post(user_email, timestamp, param_details)
-        
-        # Prepare parameter data
-        param_data = {
-            "id": param_id,
-            "type": param_type,
-            "name": param_name,
-            "description": param_desc,
-            "details": param_details,  # Keep original details for the parameter data
-            "forum_post": forum_post,  # Add forum post separately
-            "timestamp": datetime.datetime.now().isoformat()
-        }
-        
-        # Save to Firebase
-        success, message = firebase_service.save_parameter_to_firebase(param_id, param_data)
+        # Save directly to forum without modifying details field
+        success = self.save_to_forum(param_id, user_email, timestamp, param_details)
         
         if success:
-            # Special case for no changes detected
-            if message == "NO_CHANGES":
-                self.git_status_label.setText("⚠ No changes were detected")
-                self.git_status_label.setStyleSheet("color: #FFAA55; font-size: 8pt; font-weight: bold;")
-                self.log_debug(f"No changes detected for parameter {param_id}")
-                return
-                
-            # We do NOT update the details text with forum post format
-            # Keep the original details
-            
-            # Add to forum messages
-            self.save_to_forum(param_id, user_email, timestamp, param_details)
-            
-            # Check if we're admin by trying to find out if it went to parameters or pending
+            # Show success message
             is_admin = False
             try:
                 if firebase_service.firestore_db:
@@ -1318,21 +1300,20 @@ class VCMOverlay(QMainWindow):
                 is_admin = False
             
             if is_admin:
-                self.git_status_label.setText(f"✅ {message}")
+                self.git_status_label.setText(f"✅ Parameter details submitted")
                 self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             else:
-                self.git_status_label.setText(f"✨ Your changes are pending review")
+                self.git_status_label.setText(f"✨ Your submission is in the forum")
                 self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             
-            self.log_debug(f"Saved parameter {param_id} to Firebase")
-        else:
-            self.git_status_label.setText(f"⚠ {message}")
-            self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt;")
-            self.log_debug(f"Failed to save parameter to Firebase: {message}")
+            self.log_debug(f"Added post to forum for parameter {param_id}")
             
-            # Show error message
-            QMessageBox.warning(self, "Firebase Error", 
-                f"Failed to save parameter to Firebase:\n{message}")
+            # Clear the details box after successful submission
+            self.param_details_text.clear()
+        else:
+            self.git_status_label.setText(f"⚠ Failed to save to forum")
+            self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt;")
+            self.log_debug(f"Failed to save to forum: {param_id}")
 
     def format_forum_post(self, user_email, timestamp, details):
         """Format details as a forum post"""
@@ -1551,204 +1532,14 @@ class VCMOverlay(QMainWindow):
                     param_name = name_part.strip()
                     self.param_name_label.setText(param_name)
             
-            # Check Firebase for parameter details
+            # Load only forum messages for this parameter
+            # Don't populate the details box from Firebase
             if param_id and FIREBASE_AVAILABLE and firebase_service.get_current_user():
-                self.log_debug(f"Checking Firebase for parameter {param_id}...")
-                
-                # Load forum messages for this parameter
+                self.log_debug(f"Loading forum for parameter {param_id}...")
                 self.load_parameter_forum(param_id)
-                
-                try:
-                    if firebase_service.firestore_db:
-                        # Try to fetch from parameters collection first
-                        param_ref = firebase_service.firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
-                        
-                        if param_ref and len(param_ref) > 0:
-                            cloud_param = param_ref[0].to_dict()
-                            
-                            # Get cloud data
-                            cloud_name = cloud_param.get("name", "")
-                            cloud_desc = cloud_param.get("description", "")
-                            cloud_details = cloud_param.get("details", "")
-                            
-                            # Use cloud values if more detailed
-                            if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
-                                param_name = cloud_name
-                                self.param_name_label.setText(cloud_name)
-                            
-                            if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
-                                param_desc = cloud_desc
-                                self.param_desc_label.setText(cloud_desc)
-                            
-                            if cloud_details:
-                                # Use only the details field, not forum posts
-                                self.param_details_text.setText(cloud_details)
-                                self.update_param_details_style()
-                                self.log_debug(f"Loaded parameter details from Firestore for {param_id}")
-                                self.git_status_label.setText("📡 Parameter data from Firestore")
-                        
-                        # Check pending collection as well
-                        pending_ref = firebase_service.firestore_db.collection('pending').where('param_id', '==', param_id).limit(1).get()
-                        
-                        if pending_ref and len(pending_ref) > 0:
-                            pending_param = pending_ref[0].to_dict()
-                            
-                            # Only show pending parameter if it belongs to the current user or user is admin/moderator
-                            current_user_email = firebase_service.get_current_user().get('email', '')
-                            is_submitter = pending_param.get('submitted_by') == current_user_email
-                            
-                            # Check if user is admin or moderator
-                            is_moderator = False
-                            user_id = firebase_service.get_current_user().get('uid', '')
-                            try:
-                                user_doc = firebase_service.firestore_db.collection('users').document(user_id).get()
-                                if user_doc.exists:
-                                    user_data = user_doc.to_dict()
-                                    is_moderator = user_data.get('role') in ['admin', 'moderator']
-                            except Exception as e:
-                                self.log_debug(f"Error checking user role: {str(e)}")
-                            
-                            if is_submitter or is_moderator:
-                                # Get pending data
-                                pending_name = pending_param.get("name", "")
-                                pending_desc = pending_param.get("description", "")
-                                pending_details = pending_param.get("details", "")
-                                
-                                # Use pending values if more detailed
-                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                    param_name = pending_name
-                                    self.param_name_label.setText(pending_name)
-                                
-                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                    param_desc = pending_desc
-                                    self.param_desc_label.setText(pending_desc)
-                                
-                                if pending_details:
-                                    # Remove " - pending review" from the end if it exists
-                                    cleaned_details = pending_details
-                                    if pending_details.endswith(" - pending review"):
-                                        cleaned_details = pending_details[:-16]  # Remove the suffix
-                                    
-                                    # Use only the details field, not forum posts
-                                    if not self.contains_forum_markers(cleaned_details):
-                                        self.param_details_text.setText(cleaned_details)
-                                        self.update_param_details_style()
-                                    else:
-                                        # If it contains forum markers, extract just the actual details
-                                        actual_details = self.extract_details_from_forum(cleaned_details)
-                                        self.param_details_text.setText(actual_details)
-                                        self.update_param_details_style()
-                                        
-                                    if is_submitter:
-                                        self.log_debug(f"Loaded your pending details from Firestore for {param_id}")
-                                        self.git_status_label.setText("✨ Your changes are pending review")
-                                        self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
-                                    else:
-                                        self.log_debug(f"Loaded pending details from Firestore (admin view) for {param_id}")
-                                        submitter = pending_param.get("submitted_by", "unknown user")
-                                        self.git_status_label.setText(f"⏳ Pending review - submitted by {submitter}")
-                                        self.git_status_label.setStyleSheet("color: #FFA500; font-size: 8pt; font-weight: bold;")
-                            else:
-                                # Don't show pending data from other users
-                                self.log_debug(f"Pending data exists for {param_id} but belongs to another user")
-                    
-                    elif firebase_service.firebase:
-                        # Try Realtime Database
-                        current_user = firebase_service.get_current_user()
-                        db = firebase_service.firebase.database()
-                        
-                        # Check parameters collection
-                        param_data = db.child('parameters').child(param_id).get(token=current_user['token']).val()
-                        
-                        if param_data:
-                            # Get cloud data
-                            cloud_name = param_data.get("name", "")
-                            cloud_desc = param_data.get("description", "")
-                            cloud_details = param_data.get("details", "")
-                            
-                            # Use cloud values if more detailed
-                            if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
-                                param_name = cloud_name
-                                self.param_name_label.setText(cloud_name)
-                            
-                            if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
-                                param_desc = cloud_desc
-                                self.param_desc_label.setText(cloud_desc)
-                            
-                            if cloud_details:
-                                # Use only the details field, not forum posts
-                                if not self.contains_forum_markers(cloud_details):
-                                    self.param_details_text.setText(cloud_details)
-                                else:
-                                    # If it contains forum markers, extract just the actual details
-                                    actual_details = self.extract_details_from_forum(cloud_details)
-                                    self.param_details_text.setText(actual_details)
-                                self.update_param_details_style()
-                                self.log_debug(f"Loaded parameter details from Realtime Database for {param_id}")
-                                self.git_status_label.setText("📡 Parameter data from database")
-                        
-                        # Check pending collection
-                        pending_data = db.child('pending').child(param_id).get(token=current_user['token']).val()
-                        
-                        if pending_data:
-                            # Only show pending parameter if it belongs to the current user or user is admin/moderator
-                            current_user_email = current_user.get('email', '')
-                            is_submitter = pending_data.get('submitted_by') == current_user_email
-                            
-                            # Check if user is admin or moderator
-                            is_moderator = False
-                            try:
-                                user_data = db.child('users').child(current_user['uid']).get(token=current_user['token']).val()
-                                is_moderator = user_data and user_data.get('role') in ['admin', 'moderator']
-                            except Exception as e:
-                                self.log_debug(f"Error checking user role in Realtime DB: {str(e)}")
-                            
-                            if is_submitter or is_moderator:
-                                # Get pending data
-                                pending_name = pending_data.get("name", "")
-                                pending_desc = pending_data.get("description", "")
-                                pending_details = pending_data.get("details", "")
-                                
-                                # Use pending values if more detailed
-                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                    param_name = pending_name
-                                    self.param_name_label.setText(pending_name)
-                                
-                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                    param_desc = pending_desc
-                                    self.param_desc_label.setText(pending_desc)
-                                
-                                if pending_details:
-                                    # Remove " - pending review" from the end if it exists
-                                    cleaned_details = pending_details
-                                    if pending_details.endswith(" - pending review"):
-                                        cleaned_details = pending_details[:-16]  # Remove the suffix
-                                    
-                                    # Use only the details field, not forum posts
-                                    if not self.contains_forum_markers(cleaned_details):
-                                        self.param_details_text.setText(cleaned_details)
-                                    else:
-                                        # If it contains forum markers, extract just the actual details
-                                        actual_details = self.extract_details_from_forum(cleaned_details)
-                                        self.param_details_text.setText(actual_details)
-                                    self.update_param_details_style()
-                                    
-                                    if is_submitter:
-                                        self.log_debug(f"Loaded your pending details from Realtime Database for {param_id}")
-                                        self.git_status_label.setText("✨ Your changes are pending review")
-                                        self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
-                                    else:
-                                        self.log_debug(f"Loaded pending details from Realtime Database (admin view) for {param_id}")
-                                        submitter = pending_data.get("submitted_by", "unknown user")
-                                        self.git_status_label.setText(f"⏳ Pending review - submitted by {submitter}")
-                                        self.git_status_label.setStyleSheet("color: #FFA500; font-size: 8pt; font-weight: bold;")
-                            else:
-                                # Don't show pending data from other users
-                                self.log_debug(f"Pending data exists for {param_id} in Realtime Database but belongs to another user")
-                
-                except Exception as e:
-                    self.log_debug(f"Error checking Firebase for parameter {param_id}: {str(e)}")
-                    self.git_status_label.setText(f"⚠ Error checking Firestore: {str(e)}")
+                # Set the status message
+                self.git_status_label.setText("✏️ Enter parameter details above")
+                self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
 
             # Update the param info text in the debug window
             if hasattr(self, 'param_info_text') and self.param_info_text:
@@ -2175,7 +1966,7 @@ Details: {self.param_details_text.toPlainText()}"""
                         else:
                             timestamp_str = str(timestamp)
                         
-                        # Add to forum text
+                        # Add to forum text with better formatting
                         forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
                     
                     # Update forum messages
@@ -2217,7 +2008,7 @@ Details: {self.param_details_text.toPlainText()}"""
                         else:
                             timestamp_str = str(timestamp)
                         
-                        # Add to forum text
+                        # Add to forum text with better formatting
                         forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
                     
                     # Update forum messages
@@ -2248,6 +2039,7 @@ Details: {self.param_details_text.toPlainText()}"""
             post_data = {
                 'user': user_email,
                 'content': content,
+                'param_id': param_id,
                 'timestamp': datetime.datetime.now(),
             }
             
@@ -2279,6 +2071,46 @@ Details: {self.param_details_text.toPlainText()}"""
         except Exception as e:
             self.log_debug(f"Error saving forum post: {str(e)}")
             return False
+
+    def clean_parameters_collection(self):
+        """Clean up old parameters from the parameters collection"""
+        if not FIREBASE_AVAILABLE or not firebase_service.firestore_db:
+            return
+            
+        try:
+            # Get current user
+            current_user = firebase_service.get_current_user()
+            if not current_user:
+                return
+                
+            # Check if user is admin
+            is_admin = False
+            try:
+                user_doc = firebase_service.firestore_db.collection('users').document(current_user['uid']).get()
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    is_admin = user_data.get('role') == 'admin' and user_data.get('trusted', False)
+            except Exception as e:
+                self.log_debug(f"Error checking admin status: {str(e)}")
+                return
+                
+            # Only allow admins to clean up the collection
+            if not is_admin:
+                return
+                
+            # Get all documents from parameters collection
+            param_docs = firebase_service.firestore_db.collection('parameters').get()
+            
+            # Log the number of documents found
+            self.log_debug(f"Found {len(param_docs)} documents in parameters collection")
+            
+            # Delete each document
+            for doc in param_docs:
+                firebase_service.firestore_db.collection('parameters').document(doc.id).delete()
+                
+            self.log_debug("Cleaned up parameters collection")
+        except Exception as e:
+            self.log_debug(f"Error cleaning parameters collection: {str(e)}")
 
 
 
