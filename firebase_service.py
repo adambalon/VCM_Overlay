@@ -302,11 +302,7 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Admin users save directly to parameters collection
                 print(f"User is admin, saving parameter {param_id} directly to parameters collection...")
                 
-                # Append " - cloud saved" to details for parameters collection
-                if 'details' in enriched_data and enriched_data['details']:
-                    # Only append if not already there
-                    if not enriched_data['details'].endswith(" - cloud saved"):
-                        enriched_data['details'] = enriched_data['details'].rstrip(" - pending review") + " - cloud saved"
+                # Don't append " - cloud saved" to details anymore, we're showing status in the UI
                 
                 # Check if parameter already exists
                 param_ref = firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
@@ -327,11 +323,7 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Regular users save to pending collection
                 print(f"User is not admin, saving parameter {param_id} to pending collection...")
                 
-                # Append " - pending review" to details for pending collection
-                if 'details' in enriched_data and enriched_data['details']:
-                    # Only append if not already there
-                    if not enriched_data['details'].endswith(" - pending review"):
-                        enriched_data['details'] = enriched_data['details'].rstrip(" - cloud saved") + " - pending review"
+                # Don't append " - pending review" to details anymore, we're showing status in the UI
                 
                 # Add pending-specific fields
                 enriched_data['param_id'] = param_id
@@ -374,11 +366,7 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Admin users save directly to parameters
                 print(f"User is admin, saving parameter {param_id} directly to parameters node...")
                 
-                # Append " - cloud saved" to details for parameters
-                if 'details' in enriched_data and enriched_data['details']:
-                    # Only append if not already there
-                    if not enriched_data['details'].endswith(" - cloud saved"):
-                        enriched_data['details'] = enriched_data['details'].rstrip(" - pending review") + " - cloud saved"
+                # Don't append " - cloud saved" to details anymore, we're showing status in the UI
                 
                 # Add approval info for admins
                 enriched_data['approved_by'] = current_user.get('email', 'Unknown')
@@ -390,11 +378,7 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Regular users save to pending
                 print(f"User is not admin, saving parameter {param_id} to pending node...")
                 
-                # Append " - pending review" to details for pending
-                if 'details' in enriched_data and enriched_data['details']:
-                    # Only append if not already there
-                    if not enriched_data['details'].endswith(" - pending review"):
-                        enriched_data['details'] = enriched_data['details'].rstrip(" - cloud saved") + " - pending review"
+                # Don't append " - pending review" to details anymore, we're showing status in the UI
                 
                 # Add submission info
                 enriched_data['submitted_by'] = current_user.get('email', 'Unknown')

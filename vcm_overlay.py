@@ -1128,6 +1128,10 @@ class VCMOverlay(QMainWindow):
         param_desc = self.param_desc_label.text()
         param_details = self.param_details_text.toPlainText()
         
+        # Remove any existing status suffix from details
+        if param_details.endswith(" - pending review") or param_details.endswith(" - cloud saved"):
+            param_details = param_details.rsplit(" - ", 1)[0]
+        
         if not param_id:
             self.git_status_label.setText("⚠ No parameter selected")
             return
@@ -1146,10 +1150,33 @@ class VCMOverlay(QMainWindow):
         success, message = firebase_service.save_parameter_to_firebase(param_id, param_data)
         
         if success:
-            self.git_status_label.setText(f"✓ {message}")
+            # Check if we're admin by trying to find out if it went to parameters or pending
+            is_admin = False
+            try:
+                if firebase_service.firestore_db:
+                    user_doc = firebase_service.firestore_db.collection('users').document(current_user['uid']).get()
+                    if user_doc.exists:
+                        user_data = user_doc.to_dict()
+                        is_admin = user_data.get('role') == 'admin' and user_data.get('trusted', False)
+                elif firebase_service.firebase:
+                    db = firebase_service.firebase.database()
+                    user_data = db.child('users').child(current_user['uid']).get(token=current_user['token']).val()
+                    is_admin = user_data and user_data.get('role') == 'admin' and user_data.get('trusted', False)
+            except Exception as e:
+                self.log_debug(f"Error checking admin status: {str(e)}")
+                is_admin = False
+            
+            if is_admin:
+                self.git_status_label.setText(f"✅ {message}")
+                self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
+            else:
+                self.git_status_label.setText(f"✨ Your changes are pending review")
+                self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
+            
             self.log_debug(f"Saved parameter {param_id} to Firebase")
         else:
             self.git_status_label.setText(f"⚠ {message}")
+            self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt;")
             self.log_debug(f"Failed to save parameter to Firebase: {message}")
             
             # Show error message
@@ -1378,24 +1405,55 @@ class VCMOverlay(QMainWindow):
                         if pending_ref and len(pending_ref) > 0:
                             pending_param = pending_ref[0].to_dict()
                             
-                            # Get pending data
-                            pending_name = pending_param.get("name", "")
-                            pending_desc = pending_param.get("description", "")
-                            pending_details = pending_param.get("details", "")
+                            # Only show pending parameter if it belongs to the current user or user is admin/moderator
+                            current_user_email = firebase_service.get_current_user().get('email', '')
+                            is_submitter = pending_param.get('submitted_by') == current_user_email
                             
-                            # Use pending values if more detailed
-                            if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                param_name = pending_name
-                                self.param_name_label.setText(pending_name)
+                            # Check if user is admin or moderator
+                            is_moderator = False
+                            user_id = firebase_service.get_current_user().get('uid', '')
+                            try:
+                                user_doc = firebase_service.firestore_db.collection('users').document(user_id).get()
+                                if user_doc.exists:
+                                    user_data = user_doc.to_dict()
+                                    is_moderator = user_data.get('role') in ['admin', 'moderator']
+                            except Exception as e:
+                                self.log_debug(f"Error checking user role: {str(e)}")
                             
-                            if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                param_desc = pending_desc
-                                self.param_desc_label.setText(pending_desc)
-                            
-                            if pending_details:
-                                self.param_details_text.setText(pending_details)
-                                self.log_debug(f"Loaded parameter details from Firestore pending for {param_id}")
-                                self.git_status_label.setText("📡 Parameter data from pending collection")
+                            if is_submitter or is_moderator:
+                                # Get pending data
+                                pending_name = pending_param.get("name", "")
+                                pending_desc = pending_param.get("description", "")
+                                pending_details = pending_param.get("details", "")
+                                
+                                # Use pending values if more detailed
+                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
+                                    param_name = pending_name
+                                    self.param_name_label.setText(pending_name)
+                                
+                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
+                                    param_desc = pending_desc
+                                    self.param_desc_label.setText(pending_desc)
+                                
+                                if pending_details:
+                                    # Remove " - pending review" from the end if it exists
+                                    cleaned_details = pending_details
+                                    if pending_details.endswith(" - pending review"):
+                                        cleaned_details = pending_details[:-16]  # Remove the suffix
+                                    
+                                    self.param_details_text.setText(cleaned_details)
+                                    if is_submitter:
+                                        self.log_debug(f"Loaded your pending details from Firestore for {param_id}")
+                                        self.git_status_label.setText("✨ Your changes are pending review")
+                                        self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
+                                    else:
+                                        self.log_debug(f"Loaded pending details from Firestore (admin view) for {param_id}")
+                                        submitter = pending_param.get("submitted_by", "unknown user")
+                                        self.git_status_label.setText(f"⏳ Pending review - submitted by {submitter}")
+                                        self.git_status_label.setStyleSheet("color: #FFA500; font-size: 8pt; font-weight: bold;")
+                            else:
+                                # Don't show pending data from other users
+                                self.log_debug(f"Pending data exists for {param_id} but belongs to another user")
                     
                     elif firebase_service.firebase:
                         # Try Realtime Database
@@ -1429,24 +1487,52 @@ class VCMOverlay(QMainWindow):
                         pending_data = db.child('pending').child(param_id).get(token=current_user['token']).val()
                         
                         if pending_data:
-                            # Get pending data
-                            pending_name = pending_data.get("name", "")
-                            pending_desc = pending_data.get("description", "")
-                            pending_details = pending_data.get("details", "")
+                            # Only show pending parameter if it belongs to the current user or user is admin/moderator
+                            current_user_email = current_user.get('email', '')
+                            is_submitter = pending_data.get('submitted_by') == current_user_email
                             
-                            # Use pending values if more detailed
-                            if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                param_name = pending_name
-                                self.param_name_label.setText(pending_name)
+                            # Check if user is admin or moderator
+                            is_moderator = False
+                            try:
+                                user_data = db.child('users').child(current_user['uid']).get(token=current_user['token']).val()
+                                is_moderator = user_data and user_data.get('role') in ['admin', 'moderator']
+                            except Exception as e:
+                                self.log_debug(f"Error checking user role in Realtime DB: {str(e)}")
                             
-                            if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                param_desc = pending_desc
-                                self.param_desc_label.setText(pending_desc)
-                            
-                            if pending_details:
-                                self.param_details_text.setText(pending_details)
-                                self.log_debug(f"Loaded parameter details from Realtime Database pending for {param_id}")
-                                self.git_status_label.setText("📡 Parameter data from pending collection")
+                            if is_submitter or is_moderator:
+                                # Get pending data
+                                pending_name = pending_data.get("name", "")
+                                pending_desc = pending_data.get("description", "")
+                                pending_details = pending_data.get("details", "")
+                                
+                                # Use pending values if more detailed
+                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
+                                    param_name = pending_name
+                                    self.param_name_label.setText(pending_name)
+                                
+                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
+                                    param_desc = pending_desc
+                                    self.param_desc_label.setText(pending_desc)
+                                
+                                if pending_details:
+                                    # Remove " - pending review" from the end if it exists
+                                    cleaned_details = pending_details
+                                    if pending_details.endswith(" - pending review"):
+                                        cleaned_details = pending_details[:-16]  # Remove the suffix
+                                    
+                                    self.param_details_text.setText(cleaned_details)
+                                    if is_submitter:
+                                        self.log_debug(f"Loaded your pending details from Realtime Database for {param_id}")
+                                        self.git_status_label.setText("✨ Your changes are pending review")
+                                        self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
+                                    else:
+                                        self.log_debug(f"Loaded pending details from Realtime Database (admin view) for {param_id}")
+                                        submitter = pending_data.get("submitted_by", "unknown user")
+                                        self.git_status_label.setText(f"⏳ Pending review - submitted by {submitter}")
+                                        self.git_status_label.setStyleSheet("color: #FFA500; font-size: 8pt; font-weight: bold;")
+                            else:
+                                # Don't show pending data from other users
+                                self.log_debug(f"Pending data exists for {param_id} in Realtime Database but belongs to another user")
                 
                 except Exception as e:
                     self.log_debug(f"Error checking Firebase for parameter {param_id}: {str(e)}")
@@ -1495,6 +1581,7 @@ Details: {self.param_details_text.toPlainText()}"""
 
         if not param_id:
             self.git_status_label.setText("⚠ No parameter selected")
+            self.git_status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
             return
             
         current_details = self.param_details_text.toPlainText()
@@ -1504,6 +1591,7 @@ Details: {self.param_details_text.toPlainText()}"""
             # Set approved style
             self.mark_as_approved(param_id, get_ecm_type_from_text(self.last_parameter_text))
             self.git_status_label.setText("✅ This parameter has been approved")
+            self.git_status_label.setStyleSheet("color: #4CAF50; font-size: 8pt; font-weight: bold;")
             return
             
         if " - Rejected" in current_details:
@@ -1518,10 +1606,12 @@ Details: {self.param_details_text.toPlainText()}"""
                 }
             """)
             self.git_status_label.setText("❌ This parameter has been rejected")
+            self.git_status_label.setStyleSheet("color: #FF5555; font-size: 8pt; font-weight: bold;")
             return
             
         # No status indicator
         self.git_status_label.setText("📝 Parameter details saved locally")
+        self.git_status_label.setStyleSheet("color: #AAAAAA; font-size: 8pt;")
 
     def mark_as_approved(self, param_id, ecm_type):
         """Mark the current parameter as approved"""
