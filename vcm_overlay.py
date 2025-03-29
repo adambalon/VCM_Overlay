@@ -1,3 +1,4 @@
+﻿# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 
 """
@@ -34,7 +35,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 
                             QLabel, QPushButton, QTextEdit, QTabWidget, QLineEdit, 
 
-                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox)
+                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QFrame)
 
 from PyQt5.QtCore import QTimer, Qt, QEvent, QRect, QSize
 
@@ -828,7 +829,7 @@ class VCMOverlay(QMainWindow):
         minimize_btn.clicked.connect(self.showMinimized)
         btn_layout.addWidget(minimize_btn)
         
-        close_btn = QPushButton("�")
+        close_btn = QPushButton("×")
         close_btn.setFixedSize(16, 16)
         close_btn.setStyleSheet("""
             QPushButton {
@@ -1093,37 +1094,47 @@ class VCMOverlay(QMainWindow):
         self.forum_messages.setReadOnly(True)
         self.forum_messages.setMinimumHeight(150)
         self.forum_messages.setStyleSheet("""
-            QTextEdit {
-                background-color: #121212;
-                color: #DDDDDD;
-                border: 1px solid #333333;
-                border-radius: 6px;
-                font-family: Arial, sans-serif;
-                line-height: 1.4;
-                padding: 5px;
+            background-color: #0A0A0A;
+            color: #E0E0E0;
+            border: none;
+            font-size: 9pt;
+        """)
+        forum_layout.addWidget(self.forum_messages)
+        
+        # Create a scroll area for forum posts that will replace the QTextEdit
+        self.forum_scroll_area = QScrollArea()
+        self.forum_scroll_area.setWidgetResizable(True)
+        self.forum_scroll_area.setMinimumHeight(150)
+        self.forum_scroll_area.setStyleSheet("""
+            QScrollArea {
+                background-color: #0A0A0A;
+                border: none;
             }
             QScrollBar:vertical {
-                background-color: #1A1A1A;
-                width: 14px;
+                background: #1A1A1A;
+                width: 12px;
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background-color: #444444;
+                background: #333333;
                 min-height: 20px;
-                border-radius: 7px;
-                margin: 2px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #555555;
+                border-radius: 6px;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
             }
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                background: none;
-            }
         """)
-        forum_layout.addWidget(self.forum_messages)
+        
+        # Create a widget to hold all forum posts
+        self.forum_posts_container = QWidget()
+        self.forum_posts_layout = QVBoxLayout(self.forum_posts_container)
+        self.forum_posts_layout.setContentsMargins(0, 0, 0, 0)
+        self.forum_posts_layout.setSpacing(40)  # 40px spacing between posts
+        self.forum_scroll_area.setWidget(self.forum_posts_container)
+        
+        # Hide the QTextEdit and add the scroll area
+        self.forum_messages.hide()
+        forum_layout.addWidget(self.forum_scroll_area)
         
         # Add the forum container to the main layout
         details_field_layout.addWidget(self.forum_container)
@@ -2180,200 +2191,16 @@ Details: {self.param_details_text.toPlainText()}"""
             
     def load_parameter_forum(self, param_id):
         """Load forum messages for a parameter"""
-        if not hasattr(self, 'forum_messages'):
-            self.log_debug("Forum messages widget not available")
+        if not hasattr(self, 'forum_posts_container'):
+            self.log_debug("Forum posts container not available")
             return
             
-        self.forum_messages.clear()
+        # Clear existing posts
+        self.clear_forum_posts()
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
-            self.forum_messages.setHtml("""
-            <html>
-            <head>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-                    
-                    * {
-                        box-sizing: border-box;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    
-                    body {
-                        background-color: #0A0A0A;
-                        margin: 0;
-                        padding: 20px;
-                        font-family: 'Inter', sans-serif;
-                        color: #E0E0E0;
-                        line-height: 1.5;
-                    }
-                    
-                    .forum-container {
-                        max-width: 100%;
-                    }
-                    
-                    .forum-header {
-                        background-color: #1E1E22;
-                        padding: 18px 24px;
-                        margin-bottom: 32px;
-                        border-radius: 8px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .forum-title {
-                        color: #FFFFFF;
-                        font-weight: 700;
-                        font-size: 16px;
-                        letter-spacing: 0.5px;
-                    }
-                    
-                    .post-count {
-                        display: none;
-                    }
-                    
-                    .posts-container {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 40px;
-                    }
-                    
-                    .post {
-                        background-color: #18181B;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .post.current-user {
-                        box-shadow: 0 0 0 1px #FF6600;
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .post-header {
-                        background-color: #26262C;
-                        padding: 16px 20px;
-                        border-bottom: 1px solid #38383E;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                    }
-                    
-                    .username {
-                        font-weight: 600;
-                        color: #FFFFFF;
-                        font-size: 15px;
-                    }
-                    
-                    .post-time {
-                        font-size: 12px;
-                        color: #8C8C95;
-                    }
-                    
-                    .post-content {
-                        padding: 22px;
-                        color: #DDDDDD;
-                        font-size: 14px;
-                        line-height: 1.6;
-                    }
-                    
-                    .post-content p {
-                        margin-bottom: 12px;
-                    }
-                    
-                    .post-content p:last-child {
-                        margin-bottom: 0;
-                    }
-                    
-                    .post-footer {
-                        background-color: #1E1E24;
-                        padding: 12px 20px;
-                        border-top: 1px solid #38383E;
-                        display: flex;
-                        align-items: center;
-                    }
-                    
-                    .status-label {
-                        font-size: 13px;
-                        color: #8C8C95;
-                        margin-right: 10px;
-                    }
-                    
-                    .status-value {
-                        font-size: 13px;
-                        font-weight: 600;
-                    }
-                    
-                    .status-pending {
-                        color: #FFD700;
-                    }
-                    
-                    .status-accepted {
-                        color: #4CAF50;
-                    }
-                    
-                    .status-rejected {
-                        color: #F44336;
-                    }
-                    
-                    /* Empty state */
-                    .empty-state {
-                        padding: 50px 20px;
-                        text-align: center;
-                        background-color: #18181B;
-                        border-radius: 8px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .forum-title {
-                        color: #FFFFFF;
-                        font-weight: 700;
-                        font-size: 16px;
-                        letter-spacing: 0.5px;
-                    }
-                    
-                    /* Login required state */
-                    .login-state {
-                        padding: 50px 20px;
-                        text-align: center;
-                        background-color: #18181B;
-                        border-radius: 8px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .login-title {
-                        color: #8C8C95;
-                        font-size: 16px;
-                        margin-bottom: 8px;
-                        font-weight: 500;
-                    }
-                    
-                    .login-message {
-                        color: #65656B;
-                        font-size: 14px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="forum-container">
-                    <div class="forum-header">
-                        <div class="forum-title">Parameter Discussion</div>
-                    </div>
-                    <div class="login-state">
-                        <div class="login-title">Authentication Required</div>
-                        <div class="login-message">Please log in to view and participate in discussions</div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """)
+            self.show_login_required_message()
             return
         
         try:
@@ -2387,197 +2214,6 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Create tech-inspired forum layout
-                    html_content = """
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-                            
-                            * {
-                                box-sizing: border-box;
-                                margin: 0;
-                                padding: 0;
-                            }
-                            
-                            body {
-                                background-color: #0A0A0A;
-                                margin: 0;
-                                padding: 20px;
-                                font-family: 'Inter', sans-serif;
-                                color: #E0E0E0;
-                                line-height: 1.5;
-                            }
-                            
-                            .forum-container {
-                                max-width: 100%;
-                            }
-                            
-                            .forum-header {
-                                background-color: #1E1E22;
-                                padding: 18px 24px;
-                                margin-bottom: 32px;
-                                border-radius: 8px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                                border: 1px solid #FFFFFF;
-                            }
-                            
-                            .forum-title {
-                                color: #FFFFFF;
-                                font-weight: 700;
-                                font-size: 16px;
-                                letter-spacing: 0.5px;
-                            }
-                            
-                            .post-count {
-                                font-size: 12px;
-                                background-color: #32323A;
-                                color: #AAAAAA;
-                                padding: 3px 10px;
-                                border-radius: 12px;
-                                font-weight: 500;
-                            }
-                            
-                            .posts-container {
-                                display: flex;
-                                flex-direction: column;
-                                gap: 40px;
-                            }
-                            
-                            .post {
-                                background-color: #18181B;
-                                border-radius: 8px;
-                                overflow: hidden;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                            }
-                            
-                            .post.current-user {
-                                box-shadow: 0 0 0 1px #FF6600;
-                            }
-                            
-                            .post-header {
-                                background-color: #26262C;
-                                padding: 16px 20px;
-                                border-bottom: 1px solid #38383E;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                            }
-                            
-                            .username {
-                                font-weight: 600;
-                                color: #FFFFFF;
-                                font-size: 15px;
-                            }
-                            
-                            .post-time {
-                                font-size: 12px;
-                                color: #8C8C95;
-                            }
-                            
-                            .post-content {
-                                padding: 22px;
-                                color: #DDDDDD;
-                                font-size: 14px;
-                                line-height: 1.6;
-                            }
-                            
-                            .post-content p {
-                                margin-bottom: 12px;
-                            }
-                            
-                            .post-content p:last-child {
-                                margin-bottom: 0;
-                            }
-                            
-                            .post-footer {
-                                background-color: #1E1E24;
-                                padding: 12px 20px;
-                                border-top: 1px solid #38383E;
-                                display: flex;
-                                align-items: center;
-                            }
-                            
-                            .status-label {
-                                font-size: 13px;
-                                color: #8C8C95;
-                                margin-right: 10px;
-                            }
-                            
-                            .status-value {
-                                font-size: 13px;
-                                font-weight: 600;
-                            }
-                            
-                            .status-pending {
-                                color: #FFD700;
-                            }
-                            
-                            .status-accepted {
-                                color: #4CAF50;
-                            }
-                            
-                            .status-rejected {
-                                color: #F44336;
-                            }
-                            
-                            /* Empty state */
-                            .empty-state {
-                                padding: 50px 20px;
-                                text-align: center;
-                                background-color: #18181B;
-                                border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                                border: 1px solid #FFFFFF;
-                            }
-                            
-                            .empty-title {
-                                color: #8C8C95;
-                                font-size: 16px;
-                                margin-bottom: 8px;
-                                font-weight: 500;
-                            }
-                            
-                            .empty-subtitle {
-                                color: #65656B;
-                                font-size: 14px;
-                            }
-                            
-                            /* Error state */
-                            .error-state {
-                                padding: 50px 20px;
-                                text-align: center;
-                                background-color: #18181B;
-                                border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                                border: 1px solid #FFFFFF;
-                            }
-                            
-                            .error-title {
-                                color: #F44336;
-                                font-size: 16px;
-                                margin-bottom: 12px;
-                                font-weight: 600;
-                            }
-                            
-                            .error-message {
-                                color: #8C8C95;
-                                font-size: 14px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="forum-container">
-                            <div class="forum-header">
-                                <div class="forum-title">Parameter Discussion</div>
-                                <div class="post-count">{len(posts)} posts</div>
-                            </div>
-                            <div class="posts-container">
-                    """
-                    
                     # Convert to list and sort by timestamp (newest first for forum style)
                     posts = []
                     for post in forum_posts:
@@ -2611,228 +2247,253 @@ Details: {self.param_details_text.toPlainText()}"""
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
-                        current_user_class = "current-user" if is_current_user else ""
-                        
-                        # Replace newlines with paragraph tags for better formatting
-                        paragraphs = content.split('\n\n')
-                        formatted_content = ""
-                        for p in paragraphs:
-                            if p.strip():
-                                # Replace single newlines with <br> tags
-                                p_content = p.replace('\n', '<br>')
-                                formatted_content += f"<p>{p_content}</p>"
-                        
-                        # If no paragraphs were created, use the original with <br> tags
-                        if not formatted_content:
-                            formatted_content = f"<p>{content.replace('\n', '<br>')}</p>"
                         
                         # Get status (default to pending if not set)
                         status = post_data.get('status', 'pending')
-                        status_class = f"status-{status}"
                         
-                        # Create clean post with header/content/footer and NO avatars
-                        html_content += f"""
-                        <div class="post {current_user_class}">
-                            <div class="post-header">
-                                <div class="username">{display_name}</div>
-                                <div class="post-time">{full_time}</div>
-                            </div>
-                            <div class="post-content">
-                                {formatted_content}
-                            </div>
-                            <div class="post-footer">
-                                <div class="status-label">Post Status:</div>
-                                <div class="status-value {status_class}">{status.capitalize()}</div>
-                            </div>
-                        </div>
-                        """
+                        # Add the post to the forum
+                        self.add_forum_post(display_name, full_time, content, status, is_current_user)
                     
-                    html_content += """
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                    """
-                    
-                    # Update forum messages
-                    self.forum_messages.setHtml(html_content)
-                    # Scroll to the top for forum style
-                    self.forum_messages.verticalScrollBar().setValue(0)
                     self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setHtml("""
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-                            
-                            * {
-                                box-sizing: border-box;
-                                margin: 0;
-                                padding: 0;
-                            }
-                            
-                            body {
-                                background-color: #0A0A0A;
-                                margin: 0;
-                                padding: 20px;
-                                font-family: 'Inter', sans-serif;
-                                color: #E0E0E0;
-                                line-height: 1.5;
-                            }
-                            
-                            .forum-container {
-                                max-width: 100%;
-                            }
-                            
-                            .forum-header {
-                                background-color: #1E1E22;
-                                padding: 18px 24px;
-                                margin-bottom: 32px;
-                                border-radius: 8px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                                border: 1px solid #FFFFFF;
-                            }
-                            
-                            .forum-title {
-                                color: #FFFFFF;
-                                font-weight: 700;
-                                font-size: 16px;
-                                letter-spacing: 0.5px;
-                            }
-                            
-                            .post-count {
-                                font-size: 12px;
-                                background-color: #32323A;
-                                color: #AAAAAA;
-                                padding: 3px 10px;
-                                border-radius: 12px;
-                                font-weight: 500;
-                            }
-                            
-                            /* Empty state */
-                            .empty-state {
-                                padding: 50px 20px;
-                                text-align: center;
-                                background-color: #18181B;
-                                border-radius: 8px;
-                                box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                                border: 1px solid #FFFFFF;
-                            }
-                            
-                            .empty-title {
-                                color: #8C8C95;
-                                font-size: 16px;
-                                margin-bottom: 8px;
-                                font-weight: 500;
-                            }
-                            
-                            .empty-subtitle {
-                                color: #65656B;
-                                font-size: 14px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="forum-container">
-                            <div class="forum-header">
-                                <div class="forum-title">Parameter Discussion</div>
-                                <div class="post-count">0 posts</div>
-                            </div>
-                            <div class="empty-state">
-                                <div class="empty-title">No discussions yet</div>
-                                <div class="empty-subtitle">Start the conversation by adding your parameter information</div>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                    """)
-        
+                    self.show_empty_forum_message()
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
-            self.forum_messages.setHtml(f"""
-            <html>
-            <head>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-                    
-                    * {
-                        box-sizing: border-box;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    
-                    body {
-                        background-color: #0A0A0A;
-                        margin: 0;
-                        padding: 20px;
-                        font-family: 'Inter', sans-serif;
-                        color: #E0E0E0;
-                        line-height: 1.5;
-                    }
-                    
-                    .forum-container {
-                        max-width: 100%;
-                    }
-                    
-                    .forum-header {
-                        background-color: #1E1E22;
-                        padding: 18px 24px;
-                        margin-bottom: 32px;
-                        border-radius: 8px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .forum-title {
-                        color: #F44336;
-                        font-weight: 700;
-                        font-size: 16px;
-                        letter-spacing: 0.5px;
-                    }
-                    
-                    /* Error state */
-                    .error-state {
-                        padding: 50px 20px;
-                        text-align: center;
-                        background-color: #18181B;
-                        border-radius: 8px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.2); border: 1px solid #FFFFFF; border: 1px solid #FFFFFF;
-                        border: 1px solid #FFFFFF;
-                    }
-                    
-                    .error-title {
-                        color: #F44336;
-                        font-size: 16px;
-                        margin-bottom: 12px;
-                        font-weight: 600;
-                    }
-                    
-                    .error-message {
-                        color: #8C8C95;
-                        font-size: 14px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="forum-container">
-                    <div class="forum-header">
-                        <div class="forum-title">Error</div>
-                    </div>
-                    <div class="error-state">
-                        <div class="error-title">Could not load discussions</div>
-                        <div class="error-message">{str(e)}</div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """)
+            self.show_forum_error_message(str(e))
+    
+    def clear_forum_posts(self):
+        """Clear all forum posts"""
+        if hasattr(self, 'forum_posts_layout'):
+            # Remove all widgets from the layout
+            while self.forum_posts_layout.count():
+                item = self.forum_posts_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+    
+    def add_forum_post(self, username, timestamp, content, status, is_current_user=False):
+        """Add a post to the forum using Qt widgets"""
+        # Create post container widget
+        post_widget = QFrame()
+        post_widget.setFrameShape(QFrame.StyledPanel)
+        post_widget.setFrameShadow(QFrame.Plain)
+        
+        # Set border color based on user
+        border_color = "#FFFFFF"
+        if is_current_user:
+            border_color = "#FF6600"
+        
+        post_widget.setStyleSheet(f"""
+            QFrame {{
+                background-color: #18181B;
+                border: 1px solid {border_color};
+                border-radius: 8px;
+            }}
+        """)
+        
+        # Create post layout
+        post_layout = QVBoxLayout(post_widget)
+        post_layout.setContentsMargins(0, 0, 0, 0)
+        post_layout.setSpacing(0)
+        
+        # Create header widget
+        header_widget = QWidget()
+        header_widget.setStyleSheet("""
+            background-color: #26262C;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        """)
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(20, 16, 20, 16)
+        
+        # Add username and timestamp
+        username_label = QLabel(username)
+        username_label.setStyleSheet("""
+            color: #FFFFFF;
+            font-weight: bold;
+            font-size: 15px;
+        """)
+        
+        timestamp_label = QLabel(timestamp)
+        timestamp_label.setStyleSheet("""
+            color: #8C8C95;
+            font-size: 12px;
+        """)
+        
+        header_layout.addWidget(username_label)
+        header_layout.addStretch()
+        header_layout.addWidget(timestamp_label)
+        
+        # Create content widget
+        content_widget = QLabel(content)
+        content_widget.setWordWrap(True)
+        content_widget.setStyleSheet("""
+            color: #DDDDDD;
+            font-size: 14px;
+            padding: 22px;
+            background-color: #18181B;
+        """)
+        content_widget.setTextFormat(Qt.RichText)
+        
+        # Create footer widget
+        footer_widget = QWidget()
+        footer_widget.setStyleSheet("""
+            background-color: #1E1E24;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        """)
+        footer_layout = QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(20, 12, 20, 12)
+        
+        # Add status label
+        status_label = QLabel("Post Status:")
+        status_label.setStyleSheet("""
+            color: #8C8C95;
+            font-size: 13px;
+        """)
+        
+        # Set status color based on status
+        status_color = "#FFD700"  # pending (yellow)
+        if status == "accepted":
+            status_color = "#4CAF50"  # green
+        elif status == "rejected":
+            status_color = "#F44336"  # red
+            
+        status_value = QLabel(status.capitalize())
+        status_value.setStyleSheet(f"""
+            color: {status_color};
+            font-size: 13px;
+            font-weight: bold;
+        """)
+        
+        footer_layout.addWidget(status_label)
+        footer_layout.addWidget(status_value)
+        footer_layout.addStretch()
+        
+        # Add all sections to post
+        post_layout.addWidget(header_widget)
+        post_layout.addWidget(content_widget)
+        post_layout.addWidget(footer_widget)
+        
+        # Add post to the forum
+        self.forum_posts_layout.addWidget(post_widget)
+    
+    def show_login_required_message(self):
+        """Show a message requiring login to view forum"""
+        self.clear_forum_posts()
+        
+        message_widget = QFrame()
+        message_widget.setFrameShape(QFrame.StyledPanel)
+        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setStyleSheet("""
+            QFrame {
+                background-color: #18181B;
+                border: 1px solid #FFFFFF;
+                border-radius: 8px;
+            }
+        """)
+        
+        message_layout = QVBoxLayout(message_widget)
+        message_layout.setContentsMargins(20, 20, 20, 20)
+        
+        title_label = QLabel("Authentication Required")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("""
+            color: #8C8C95;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        """)
+        
+        message_label = QLabel("Please log in to view and participate in discussions")
+        message_label.setAlignment(Qt.AlignCenter)
+        message_label.setStyleSheet("""
+            color: #65656B;
+            font-size: 14px;
+        """)
+        
+        message_layout.addWidget(title_label)
+        message_layout.addWidget(message_label)
+        
+        self.forum_posts_layout.addWidget(message_widget)
+    
+    def show_empty_forum_message(self):
+        """Show a message when no forum posts exist"""
+        self.clear_forum_posts()
+        
+        message_widget = QFrame()
+        message_widget.setFrameShape(QFrame.StyledPanel)
+        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setStyleSheet("""
+            QFrame {
+                background-color: #18181B;
+                border: 1px solid #FFFFFF;
+                border-radius: 8px;
+            }
+        """)
+        
+        message_layout = QVBoxLayout(message_widget)
+        message_layout.setContentsMargins(20, 20, 20, 20)
+        
+        title_label = QLabel("No discussions yet")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("""
+            color: #8C8C95;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        """)
+        
+        message_label = QLabel("Start the conversation by adding your parameter information")
+        message_label.setAlignment(Qt.AlignCenter)
+        message_label.setStyleSheet("""
+            color: #65656B;
+            font-size: 14px;
+        """)
+        
+        message_layout.addWidget(title_label)
+        message_layout.addWidget(message_label)
+        
+        self.forum_posts_layout.addWidget(message_widget)
+    
+    def show_forum_error_message(self, error_message):
+        """Show an error message in the forum"""
+        self.clear_forum_posts()
+        
+        message_widget = QFrame()
+        message_widget.setFrameShape(QFrame.StyledPanel)
+        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setStyleSheet("""
+            QFrame {
+                background-color: #18181B;
+                border: 1px solid #FFFFFF;
+                border-radius: 8px;
+            }
+        """)
+        
+        message_layout = QVBoxLayout(message_widget)
+        message_layout.setContentsMargins(20, 20, 20, 20)
+        
+        title_label = QLabel("Could not load discussions")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("""
+            color: #F44336;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        """)
+        
+        message_label = QLabel(error_message)
+        message_label.setAlignment(Qt.AlignCenter)
+        message_label.setStyleSheet("""
+            color: #8C8C95;
+            font-size: 14px;
+        """)
+        
+        message_layout.addWidget(title_label)
+        message_layout.addWidget(message_label)
+        
+        self.forum_posts_layout.addWidget(message_widget)
 
     def clean_parameters_collection(self):
         """Clean up old parameters from the parameters collection"""
