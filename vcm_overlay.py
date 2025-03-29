@@ -2159,108 +2159,29 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.ASCENDING).get()  # Changed to ASCENDING for chat style
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Process forum posts
+                    # Create a simple chat-style HTML with inline styles (more compatible with QTextEdit)
                     html_content = """
-                    <style>
-                        body {
-                            margin: 0;
-                            padding: 0;
-                            background-color: #000000;
-                        }
-                        .chat-container {
-                            display: flex;
-                            flex-direction: column;
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                            padding: 10px;
-                            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoAQMAAAC2MCouAAAABlBMVEXd3d3///9DNpXLAAAAAnRSTlP/AOW3MEoAAAABiUlEQVQY02P4DwQNDBAGkNPAwMALYTRCaAYGtv//GWQZGDJgTAaGmP//Pw5gYHAEMv5r/v/9dQCE+e/f/++/GRgkvjMw2P///+8Aw/9pQJXrGRheM0CYvz4wMExgYLjBAGH+mMDA8J6B4cF/KPM/JPhrA4Q5m4GB4QEDw8MFEOYD51n/v1rP8P89xND/nxkY/i9nYHj/Ecr8/38GRDUcOHDgwIEDBw4cOHDgwIEDBw4cOPyHgP0MEOYfBojz/0GZ/9noGGQZGNgYGKQYGPgYGOQYGCYzMEgzMCxigDB3MkCY+xggzP0MEOYCBghzJQQEvQYChmsMDIJQ5n8Ghv1AqRkMDP8YIMyTDAwzGBheMzC8YTDY//3+AoL///D/e38GiP7//0//f/5ngIT/nf9//wEy//+DMP//hxr2GQI+M0CYtxkgzN0MEOYBBgjzLAOE+ZCB4QTD/zMMEBVPgOL/QeI/wOrBACiPwGDAgQMHDhw4cODAgcN/CPgABEIIBgCZTAiL6TYbQAAAAABJRU5ErkJggg==');
-                            background-color: #0a0a0a;
-                        }
-                        .message {
-                            position: relative;
-                            max-width: 75%;
-                            margin: 10px 0;
-                            padding: 12px 16px;
-                            border-radius: 30px;
-                            font-size: 10pt;
-                            line-height: 1.5;
-                            word-wrap: break-word;
-                            animation: fadeIn 0.3s ease-in-out;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                        }
-                        @keyframes fadeIn {
-                            from { opacity: 0; transform: translateY(10px); }
-                            to { opacity: 1; transform: translateY(0); }
-                        }
-                        .sent {
-                            align-self: flex-end;
-                            background-color: #0B93F6;
-                            color: white;
-                            border-bottom-right-radius: 4px;
-                            margin-left: auto;
-                            margin-right: 18px;
-                        }
-                        .sent::after {
-                            content: "";
-                            position: absolute;
-                            bottom: 0;
-                            right: -12px;
-                            width: 25px;
-                            height: 25px;
-                            background-color: #0B93F6;
-                            border-bottom-left-radius: 25px;
-                            z-index: -1;
-                        }
-                        .received {
-                            align-self: flex-start;
-                            background-color: #E5E5EA;
-                            color: black;
-                            border-bottom-left-radius: 4px;
-                            margin-right: auto;
-                            margin-left: 18px;
-                        }
-                        .received::after {
-                            content: "";
-                            position: absolute;
-                            bottom: 0;
-                            left: -12px;
-                            width: 25px;
-                            height: 25px;
-                            background-color: #E5E5EA;
-                            border-bottom-right-radius: 25px;
-                            z-index: -1;
-                        }
-                        .message-info {
-                            font-size: 8pt;
-                            margin-top: 6px;
-                            opacity: 0.7;
-                        }
-                        .sent .message-info {
-                            text-align: right;
-                            color: rgba(255, 255, 255, 0.8);
-                        }
-                        .received .message-info {
-                            color: rgba(0, 0, 0, 0.6);
-                        }
-                        .timestamp {
-                            text-align: center;
-                            color: #8e8e93;
-                            font-size: 8pt;
-                            margin: 15px 0 5px 0;
-                            opacity: 0.8;
-                        }
-                        .day-divider {
-                            text-align: center;
-                            background-color: rgba(142, 142, 147, 0.2);
-                            color: #FFFFFF;
-                            font-size: 8pt;
-                            margin: 20px auto;
-                            padding: 5px 10px;
-                            border-radius: 20px;
-                            width: fit-content;
-                            opacity: 0.8;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                        }
-                    </style>
+                    <html>
+                    <head>
+                        <style type="text/css">
+                            body { 
+                                background-color: #000000; 
+                                margin: 0; 
+                                padding: 5px;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                            }
+                            .chat-container {
+                                padding: 10px 5px;
+                            }
+                            .day-divider {
+                                text-align: center;
+                                margin: 15px 0;
+                                color: #aaaaaa;
+                                font-size: 11px;
+                            }
+                        </style>
+                    </head>
+                    <body>
                     <div class="chat-container">
                     """
                     
@@ -2295,22 +2216,51 @@ Details: {self.param_details_text.toPlainText()}"""
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
-                        message_class = "sent" if is_current_user else "received"
                         
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Add message bubble
-                        html_content += f'''
-                        <div class="message {message_class}">
-                            {content_formatted}
-                            <div class="message-info">
-                                {display_name} • {time_str}
-                            </div>
-                        </div>
-                        '''
+                        # Add message bubble with inline styles for better compatibility
+                        if is_current_user:
+                            # Sent message (blue, right-aligned)
+                            html_content += f"""
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+                                <tr>
+                                    <td width="20%"></td>
+                                    <td width="80%" align="right">
+                                        <div style="display: inline-block; background-color: #0B93F6; color: white; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-right: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            {content_formatted}
+                                            <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 5px; text-align: right;">
+                                                {display_name} • {time_str}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            """
+                        else:
+                            # Received message (gray, left-aligned)
+                            html_content += f"""
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+                                <tr>
+                                    <td width="80%">
+                                        <div style="display: inline-block; background-color: #E5E5EA; color: black; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-left: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            {content_formatted}
+                                            <div style="font-size: 9px; color: rgba(0,0,0,0.6); margin-top: 5px;">
+                                                {display_name} • {time_str}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td width="20%"></td>
+                                </tr>
+                            </table>
+                            """
                     
-                    html_content += "</div>"
+                    html_content += """
+                    </div>
+                    </body>
+                    </html>
+                    """
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
@@ -2328,108 +2278,29 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
                 
                 if forum_data:
-                    # Process forum posts
+                    # Create a simple chat-style HTML with inline styles (more compatible with QTextEdit)
                     html_content = """
-                    <style>
-                        body {
-                            margin: 0;
-                            padding: 0;
-                            background-color: #000000;
-                        }
-                        .chat-container {
-                            display: flex;
-                            flex-direction: column;
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                            padding: 10px;
-                            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoAQMAAAC2MCouAAAABlBMVEXd3d3///9DNpXLAAAAAnRSTlP/AOW3MEoAAAABiUlEQVQY02P4DwQNDBAGkNPAwMALYTRCaAYGtv//GWQZGDJgTAaGmP//Pw5gYHAEMv5r/v/9dQCE+e/f/++/GRgkvjMw2P///+8Aw/9pQJXrGRheM0CYvz4wMExgYLjBAGH+mMDA8J6B4cF/KPM/JPhrA4Q5m4GB4QEDw8MFEOYD51n/v1rP8P89xND/nxkY/i9nYHj/Ecr8/38GRDUcOHDgwIEDBw4cOHDgwIEDBw4cOPyHgP0MEOYfBojz/0GZ/9noGGQZGNgYGKQYGPgYGOQYGCYzMEgzMCxigDB3MkCY+xggzP0MEOYCBghzJQQEvQYChmsMDIJQ5n8Ghv1AqRkMDP8YIMyTDAwzGBheMzC8YTDY//3+AoL///D/e38GiP7//0//f/5ngIT/nf9//wEy//+DMP//hxr2GQI+M0CYtxkgzN0MEOYBBgjzLAOE+ZCB4QTD/zMMEBVPgOL/QeI/wOrBACiPwGDAgQMHDhw4cODAgcN/CPgABEIIBgCZTAiL6TYbQAAAAABJRU5ErkJggg==');
-                            background-color: #0a0a0a;
-                        }
-                        .message {
-                            position: relative;
-                            max-width: 75%;
-                            margin: 10px 0;
-                            padding: 12px 16px;
-                            border-radius: 30px;
-                            font-size: 10pt;
-                            line-height: 1.5;
-                            word-wrap: break-word;
-                            animation: fadeIn 0.3s ease-in-out;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                        }
-                        @keyframes fadeIn {
-                            from { opacity: 0; transform: translateY(10px); }
-                            to { opacity: 1; transform: translateY(0); }
-                        }
-                        .sent {
-                            align-self: flex-end;
-                            background-color: #0B93F6;
-                            color: white;
-                            border-bottom-right-radius: 4px;
-                            margin-left: auto;
-                            margin-right: 18px;
-                        }
-                        .sent::after {
-                            content: "";
-                            position: absolute;
-                            bottom: 0;
-                            right: -12px;
-                            width: 25px;
-                            height: 25px;
-                            background-color: #0B93F6;
-                            border-bottom-left-radius: 25px;
-                            z-index: -1;
-                        }
-                        .received {
-                            align-self: flex-start;
-                            background-color: #E5E5EA;
-                            color: black;
-                            border-bottom-left-radius: 4px;
-                            margin-right: auto;
-                            margin-left: 18px;
-                        }
-                        .received::after {
-                            content: "";
-                            position: absolute;
-                            bottom: 0;
-                            left: -12px;
-                            width: 25px;
-                            height: 25px;
-                            background-color: #E5E5EA;
-                            border-bottom-right-radius: 25px;
-                            z-index: -1;
-                        }
-                        .message-info {
-                            font-size: 8pt;
-                            margin-top: 6px;
-                            opacity: 0.7;
-                        }
-                        .sent .message-info {
-                            text-align: right;
-                            color: rgba(255, 255, 255, 0.8);
-                        }
-                        .received .message-info {
-                            color: rgba(0, 0, 0, 0.6);
-                        }
-                        .timestamp {
-                            text-align: center;
-                            color: #8e8e93;
-                            font-size: 8pt;
-                            margin: 15px 0 5px 0;
-                            opacity: 0.8;
-                        }
-                        .day-divider {
-                            text-align: center;
-                            background-color: rgba(142, 142, 147, 0.2);
-                            color: #FFFFFF;
-                            font-size: 8pt;
-                            margin: 20px auto;
-                            padding: 5px 10px;
-                            border-radius: 20px;
-                            width: fit-content;
-                            opacity: 0.8;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                        }
-                    </style>
+                    <html>
+                    <head>
+                        <style type="text/css">
+                            body { 
+                                background-color: #000000; 
+                                margin: 0; 
+                                padding: 5px;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                            }
+                            .chat-container {
+                                padding: 10px 5px;
+                            }
+                            .day-divider {
+                                text-align: center;
+                                margin: 15px 0;
+                                color: #aaaaaa;
+                                font-size: 11px;
+                            }
+                        </style>
+                    </head>
+                    <body>
                     <div class="chat-container">
                     """
                     
@@ -2471,22 +2342,51 @@ Details: {self.param_details_text.toPlainText()}"""
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
-                        message_class = "sent" if is_current_user else "received"
                         
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Add message bubble
-                        html_content += f'''
-                        <div class="message {message_class}">
-                            {content_formatted}
-                            <div class="message-info">
-                                {display_name} • {time_str}
-                            </div>
-                        </div>
-                        '''
+                        # Add message bubble with inline styles for better compatibility
+                        if is_current_user:
+                            # Sent message (blue, right-aligned)
+                            html_content += f"""
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+                                <tr>
+                                    <td width="20%"></td>
+                                    <td width="80%" align="right">
+                                        <div style="display: inline-block; background-color: #0B93F6; color: white; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-right: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            {content_formatted}
+                                            <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 5px; text-align: right;">
+                                                {display_name} • {time_str}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            """
+                        else:
+                            # Received message (gray, left-aligned)
+                            html_content += f"""
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+                                <tr>
+                                    <td width="80%">
+                                        <div style="display: inline-block; background-color: #E5E5EA; color: black; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-left: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            {content_formatted}
+                                            <div style="font-size: 9px; color: rgba(0,0,0,0.6); margin-top: 5px;">
+                                                {display_name} • {time_str}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td width="20%"></td>
+                                </tr>
+                            </table>
+                            """
                     
-                    html_content += "</div>"
+                    html_content += """
+                    </div>
+                    </body>
+                    </html>
+                    """
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
