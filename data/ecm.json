@@ -65,6 +65,114 @@
     "2786": {
       "description": "",
       "name": "Bidir Retard Max"
+    },
+    "12614": {
+      "name": "Idle Coastdown Spark vs. RPM vs. CylAir",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:26.531776"
+    },
+    "32951": {
+      "name": "Spark Smoothing Gain High Torque",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:27.513276"
+    },
+    "32950": {
+      "name": "Spark Smoothing Gain Low Torque",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:27.852326"
+    },
+    "2668": {
+      "name": "Spark Smoothing Max Torque Loss",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:27.958025"
+    },
+    "2667": {
+      "name": "Spark Smoothing Max Torque Bias",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:28.068283"
+    },
+    "2666": {
+      "name": "Spark Smoothing Max Torque Delta",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:28.396925"
+    },
+    "270": {
+      "name": "Manual Trans Spark Smoothing (RDSC) Master Enable",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:28.728391"
+    },
+    "32952": {
+      "name": "High Torque Threshold",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:30.032382"
+    },
+    "12600": {
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:30.364616"
+    },
+    "12598": {
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane, DOD",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:30.475466"
+    },
+    "12678": {
+      "name": "Flex Fuel Spark",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:31.888326"
+    },
+    "12636": {
+      "name": "PE/COT Spark Advance Correction Mult vs. Fuel Composition",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:32.113278"
+    },
+    "12621": {
+      "name": "IAT Spark Advance Correction - Add",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:32.223435"
+    },
+    "12628": {
+      "name": "IAT Spark Advance Correction - Mult2",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:32.332314"
+    },
+    "12637": {
+      "name": "PE/COT Spark Advance Correction Mult vs. MAP",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:33.639123"
+    },
+    "12620": {
+      "name": "IAT Spark Advance Correction - Mult",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:36.810949"
+    },
+    "12635": {
+      "name": "PE/COT Spark Advance Correction (Alcohol) vs. RPM vs. EQ Ratio",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:31:37.038542"
+    },
+    "12681": {
+      "name": "IAT Spark Advance Correction 2",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:32:29.593486"
     }
   }
 }

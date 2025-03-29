@@ -2561,63 +2561,32 @@ def format_json(obj, indent=2):
 
 
 def get_parameter_details_from_json(param_id, ecm_type):
-
     """
-
     Get parameter details from the JSON file
-
     Returns tuple of (parameter_data, details_text)
-
     """
-
     if not param_id or not ecm_type:
-
         return None, None
-
     
-
     try:
-
         # Load the JSON file for the ECM type
-
-        data, message = load_parameter_file(ecm_type)
-
-        if data is None:
-
-            return None, None
-
+        data = load_parameter_file(ecm_type)
         
-
         # Check for parameter in parameters section first
-
         if "parameters" in data and param_id in data["parameters"]:
-
             param_data = data["parameters"][param_id]
-
             return param_data, param_data.get("details", "")
-
         
-
         # Check if parameter exists at root level (file inconsistency)
-
         elif param_id in data and param_id != "name" and param_id != "description" and param_id != "parameters":
-
             param_data = data[param_id]
-
             return param_data, param_data.get("details", "")
-
             
-
         # Parameter not found
-
         return None, None
-
     
-
     except Exception as e:
-
         print(f"Error getting parameter details: {str(e)}")
-
         return None, None
 
 
