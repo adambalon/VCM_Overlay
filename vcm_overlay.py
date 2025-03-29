@@ -1052,16 +1052,16 @@ class VCMOverlay(QMainWindow):
         self.forum_messages.setMinimumHeight(150)
         self.forum_messages.setStyleSheet("""
             QTextEdit {
-                background-color: #0D0D0D;
-                color: #AAAAAA;
-                border: 1px solid #222222;
+                background-color: #000000;
+                color: #FFFFFF;
+                border: 1px solid #333333;
                 border-radius: 6px;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                 line-height: 1.4;
                 padding: 5px;
             }
             QScrollBar:vertical {
-                background-color: #0D0D0D;
+                background-color: #000000;
                 width: 14px;
                 margin: 0px;
             }
@@ -2162,7 +2162,7 @@ Details: {self.param_details_text.toPlainText()}"""
                     # Create a very simple HTML structure without any complex styling
                     html_content = """
                     <html>
-                    <body style="background-color:#111111; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                    <body style="background-color:#000000; margin:0; padding:5px; font-family:Arial, sans-serif;">
                     """
                     
                     last_date = None
@@ -2187,9 +2187,9 @@ Details: {self.param_details_text.toPlainText()}"""
                             current_date = timestamp.strftime("%Y-%m-%d")
                             time_str = timestamp.strftime("%I:%M %p").lstrip('0')
                             
-                            # Add date divider if it's a new day
+                            # Add date divider if it's a new day - much more subtle like in the image
                             if last_date != current_date:
-                                html_content += f'<div style="text-align:center; margin:15px 0; color:#AAAAAA; font-size:10px; background-color:#222222; padding:3px 8px; border-radius:10px; display:inline-block; width:auto; margin-left:auto; margin-right:auto;">{timestamp.strftime("%B %d, %Y")}</div><br>'
+                                html_content += f'<div style="text-align:center; margin:20px 0; color:#666666; font-size:11px;">{timestamp.strftime("%B %d, %Y")}</div>'
                                 last_date = current_date
                         else:
                             time_str = "Unknown time"
@@ -2200,34 +2200,28 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Format the message - using extremely simple HTML that QTextEdit can handle
+                        # Format the message - based on the uploaded iPhone image styling
                         if is_current_user:
-                            # Right-aligned blue message
+                            # Right-aligned blue message exactly like iPhone
                             html_content += f"""
-                            <div align="right" style="margin:8px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:80%; margin-right:5px;">
+                            <div align="right" style="margin:8px 0 16px 0;">
+                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-right:5px;">
                                     <tr>
-                                        <td bgcolor="#0B93F6" style="padding:12px; color:white; border-radius:20px; font-size:13px;">
+                                        <td bgcolor="#0B93F6" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
                                             {content_formatted}
-                                            <div style="font-size:9px; color:rgba(255,255,255,0.7); margin-top:6px; text-align:right;">
-                                                {display_name} • {time_str}
-                                            </div>
                                         </td>
                                     </tr>
                                 </table>
                             </div>
                             """
                         else:
-                            # Left-aligned gray message
+                            # Left-aligned gray message exactly like iPhone
                             html_content += f"""
-                            <div align="left" style="margin:8px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:80%; margin-left:5px;">
+                            <div align="left" style="margin:8px 0 16px 0;">
+                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-left:5px;">
                                     <tr>
-                                        <td bgcolor="#E5E5EA" style="padding:12px; color:black; border-radius:20px; font-size:13px;">
+                                        <td bgcolor="#333333" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
                                             {content_formatted}
-                                            <div style="font-size:9px; color:rgba(0,0,0,0.6); margin-top:6px;">
-                                                {display_name} • {time_str}
-                                            </div>
                                         </td>
                                     </tr>
                                 </table>
@@ -2245,7 +2239,7 @@ Details: {self.param_details_text.toPlainText()}"""
                     self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
                     self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
+                    self.forum_messages.setHtml("<div style='color:#666666;text-align:center;padding:20px;background-color:#000000;'>No forum posts yet. Save a parameter to start the conversation.</div>")
             else:
                 # Try to fetch from Realtime Database
                 current_user = firebase_service.get_current_user()
@@ -2258,7 +2252,7 @@ Details: {self.param_details_text.toPlainText()}"""
                     # Create a very simple HTML structure without any complex styling
                     html_content = """
                     <html>
-                    <body style="background-color:#111111; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                    <body style="background-color:#000000; margin:0; padding:5px; font-family:Arial, sans-serif;">
                     """
                     
                     # Convert to list and sort by timestamp (oldest first for chat style)
@@ -2290,9 +2284,9 @@ Details: {self.param_details_text.toPlainText()}"""
                             current_date = timestamp_dt.strftime("%Y-%m-%d")
                             time_str = timestamp_dt.strftime("%I:%M %p").lstrip('0')
                             
-                            # Add date divider if it's a new day
+                            # Add date divider if it's a new day - much more subtle like in the image
                             if last_date != current_date:
-                                html_content += f'<div style="text-align:center; margin:15px 0; color:#AAAAAA; font-size:10px; background-color:#222222; padding:3px 8px; border-radius:10px; display:inline-block; width:auto; margin-left:auto; margin-right:auto;">{timestamp_dt.strftime("%B %d, %Y")}</div><br>'
+                                html_content += f'<div style="text-align:center; margin:20px 0; color:#666666; font-size:11px;">{timestamp_dt.strftime("%B %d, %Y")}</div>'
                                 last_date = current_date
                         else:
                             time_str = "Unknown time"
@@ -2303,34 +2297,28 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Format the message - using extremely simple HTML that QTextEdit can handle
+                        # Format the message - based on the uploaded iPhone image styling
                         if is_current_user:
-                            # Right-aligned blue message
+                            # Right-aligned blue message exactly like iPhone
                             html_content += f"""
-                            <div align="right" style="margin:8px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:80%; margin-right:5px;">
+                            <div align="right" style="margin:8px 0 16px 0;">
+                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-right:5px;">
                                     <tr>
-                                        <td bgcolor="#0B93F6" style="padding:12px; color:white; border-radius:20px; font-size:13px;">
+                                        <td bgcolor="#0B93F6" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
                                             {content_formatted}
-                                            <div style="font-size:9px; color:rgba(255,255,255,0.7); margin-top:6px; text-align:right;">
-                                                {display_name} • {time_str}
-                                            </div>
                                         </td>
                                     </tr>
                                 </table>
                             </div>
                             """
                         else:
-                            # Left-aligned gray message
+                            # Left-aligned gray message exactly like iPhone
                             html_content += f"""
-                            <div align="left" style="margin:8px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:80%; margin-left:5px;">
+                            <div align="left" style="margin:8px 0 16px 0;">
+                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-left:5px;">
                                     <tr>
-                                        <td bgcolor="#E5E5EA" style="padding:12px; color:black; border-radius:20px; font-size:13px;">
+                                        <td bgcolor="#333333" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
                                             {content_formatted}
-                                            <div style="font-size:9px; color:rgba(0,0,0,0.6); margin-top:6px;">
-                                                {display_name} • {time_str}
-                                            </div>
                                         </td>
                                     </tr>
                                 </table>
@@ -2348,11 +2336,11 @@ Details: {self.param_details_text.toPlainText()}"""
                     self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
                     self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
+                    self.forum_messages.setHtml("<div style='color:#666666;text-align:center;padding:20px;background-color:#000000;'>No forum posts yet. Save a parameter to start the conversation.</div>")
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
-            self.forum_messages.setHtml(f"<div style='color:#FF5555;text-align:center;padding:20px;'>Error loading forum posts: {str(e)}</div>")
+            self.forum_messages.setHtml(f"<div style='color:#FF5555;text-align:center;padding:20px;background-color:#000000;'>Error loading forum posts: {str(e)}</div>")
 
     def clean_parameters_collection(self):
         """Clean up old parameters from the parameters collection"""
