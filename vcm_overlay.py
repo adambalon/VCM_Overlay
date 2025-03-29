@@ -2292,7 +2292,7 @@ Details: {self.param_details_text.toPlainText()}"""
         # Set style based on user
         border_style = ""
         if is_current_user:
-            border_style = "border-left: 3px solid #555555; margin-left: 0px;"
+            border_style = "border-left: 3px solid #555555; margin: 0;"
         
         post_widget.setStyleSheet(f"""
             QFrame {{
@@ -2406,7 +2406,7 @@ Details: {self.param_details_text.toPlainText()}"""
         """)
         
         status_chip.setFixedHeight(20)
-        status_chip.setMinimumWidth(70)
+        status_chip.setMinimumWidth(80)
         
         # Add widgets to header
         header_layout.addWidget(user_info, 1)
@@ -2495,7 +2495,7 @@ Details: {self.param_details_text.toPlainText()}"""
         message_widget.setFrameShape(QFrame.NoFrame)
         message_widget.setStyleSheet("""
             QFrame {
-                background-color: #1A1E2E;
+                background-color: #121212;
                 border-radius: 6px;
             }
         """)
@@ -2508,16 +2508,16 @@ Details: {self.param_details_text.toPlainText()}"""
         icon_label.setAlignment(Qt.AlignCenter)
         icon_label.setFixedSize(48, 48)
         icon_label.setStyleSheet("""
-            background-color: #232840;
+            background-color: #1A1A1A;
             border-radius: 24px;
             margin-bottom: 15px;
-            color: #4D7AAA;
+            color: #999999;
             font-size: 20px;
             font-weight: bold;
         """)
         icon_label.setText("💬")
         
-        title_label = QLabel("No discussions yet")
+        title_label = QLabel("No parameter details have been submitted yet")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
             color: #FFFFFF;
@@ -2526,11 +2526,11 @@ Details: {self.param_details_text.toPlainText()}"""
             margin-bottom: 10px;
         """)
         
-        message_label = QLabel("Start the conversation by adding your parameter information")
+        message_label = QLabel("Be the first to submit information about this parameter")
         message_label.setAlignment(Qt.AlignCenter)
         message_label.setWordWrap(True)
         message_label.setStyleSheet("""
-            color: #8D96B5;
+            color: #999999;
             font-size: 13px;
             line-height: 1.4;
         """)
