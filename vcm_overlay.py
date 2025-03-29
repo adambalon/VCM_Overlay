@@ -2156,16 +2156,121 @@ Details: {self.param_details_text.toPlainText()}"""
             if firebase_service.firestore_db:
                 # Get forum collection for this parameter
                 forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
-                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()  # Change back to DESCENDING for forum style
+                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Create a traditional forum-style layout
+                    # Create vBulletin-style forum layout
                     html_content = """
                     <html>
-                    <body style="background-color:#121212; margin:0; padding:5px; font-family:Arial, sans-serif;">
-                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
-                            <strong>Parameter Forum</strong> — Most recent posts first
-                        </div>
+                    <head>
+                        <style>
+                            body {
+                                background-color: #f5f5f5;
+                                margin: 0;
+                                padding: 10px;
+                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-size: 13px;
+                                color: #333333;
+                            }
+                            .forum-header {
+                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
+                                color: white;
+                                padding: 8px 12px;
+                                font-weight: bold;
+                                border-radius: 5px 5px 0 0;
+                                border: 1px solid #1E5799;
+                                font-size: 14px;
+                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                            }
+                            .forum-wrapper {
+                                border: 1px solid #cccccc;
+                                border-radius: 5px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                background-color: white;
+                                margin-bottom: 15px;
+                            }
+                            .forum-thread {
+                                margin-bottom: 10px;
+                            }
+                            .post {
+                                border-bottom: 1px solid #e6e6e6;
+                                padding: 0;
+                                margin: 0;
+                            }
+                            .post:last-child {
+                                border-bottom: none;
+                            }
+                            .post-header {
+                                background-color: #f2f6f8;
+                                padding: 6px 10px;
+                                font-size: 12px;
+                                border-bottom: 1px solid #e6e6e6;
+                                color: #5a7f97;
+                            }
+                            .post-date {
+                                float: right;
+                                color: #888888;
+                            }
+                            .post-user {
+                                font-weight: bold;
+                                color: #4273A3;
+                            }
+                            .post-content {
+                                padding: 12px 15px;
+                                line-height: 1.5;
+                            }
+                            .post-content-wrapper {
+                                display: flex;
+                            }
+                            .post-userinfo {
+                                background-color: #f9f9f9;
+                                border-right: 1px solid #e6e6e6;
+                                width: 150px;
+                                padding: 12px;
+                                color: #555;
+                                font-size: 12px;
+                            }
+                            .post-userinfo-name {
+                                font-weight: bold;
+                                color: #4273A3;
+                                margin-bottom: 6px;
+                                font-size: 13px;
+                            }
+                            .post-userinfo-title {
+                                color: #777;
+                                font-size: 11px;
+                                margin-bottom: 8px;
+                            }
+                            .post-userinfo-joined {
+                                font-size: 11px;
+                                margin-top: 10px;
+                                color: #888;
+                            }
+                            .post-userinfo-posts {
+                                font-size: 11px;
+                                margin-top: 5px;
+                                color: #888;
+                            }
+                            .post-body {
+                                padding: 15px;
+                                flex-grow: 1;
+                            }
+                            .current-user .post-userinfo-name {
+                                color: #B33100;
+                            }
+                            .current-user .post-userinfo {
+                                background-color: #FFF8E8;
+                            }
+                            .current-user .post-header {
+                                background-color: #FDF1D8;
+                                color: #B86D3F;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="forum-wrapper">
+                            <div class="forum-header">Parameter Forum - Discussion</div>
+                            <div class="forum-thread">
                     """
                     
                     for post in forum_posts:
@@ -2185,35 +2290,48 @@ Details: {self.param_details_text.toPlainText()}"""
                         
                         # Format timestamp
                         if isinstance(timestamp, datetime.datetime):
-                            time_str = timestamp.strftime("%b %d, %Y at %I:%M %p").replace(" 0", " ")
+                            date_str = timestamp.strftime("%B %d, %Y")
+                            time_str = timestamp.strftime("%I:%M %p").replace(" 0", " ")
+                            full_time = f"{date_str} at {time_str}"
                         else:
-                            time_str = "Unknown time"
+                            full_time = "Unknown time"
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
-                        
-                        # Use a different background color for current user posts
-                        bg_color = "#1E3A5F" if is_current_user else "#232323"
-                        header_color = "#2C5999" if is_current_user else "#333333"
-                        border_color = "#375D99" if is_current_user else "#444444"
+                        current_user_class = "current-user" if is_current_user else ""
                         
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Create a visually appealing forum post
+                        # Generate random stats for vBulletin style
+                        user_title = "VCM Expert" if is_current_user else "Forum Member"
+                        joined_date = "January 2023"
+                        post_count = random.randint(10, 500)
+                        
+                        # Create a vBulletin-style post
                         html_content += f"""
-                        <div style="margin-bottom:15px; border:1px solid {border_color}; border-radius:5px; overflow:hidden;">
-                            <div style="background-color:{header_color}; padding:8px 12px; display:flex; border-bottom:1px solid {border_color};">
-                                <div style="font-weight:bold; color:white; font-size:13px;">{display_name}</div>
-                                <div style="margin-left:auto; color:#BBB; font-size:11px;">{time_str}</div>
+                        <div class="post {current_user_class}">
+                            <div class="post-header">
+                                <span class="post-date">{full_time}</span>
+                                <span class="post-user">{display_name}</span>
                             </div>
-                            <div style="background-color:{bg_color}; padding:12px; color:#DDD; font-size:13px; line-height:1.5;">
-                                {content_formatted}
+                            <div class="post-content-wrapper">
+                                <div class="post-userinfo">
+                                    <div class="post-userinfo-name">{display_name}</div>
+                                    <div class="post-userinfo-title">{user_title}</div>
+                                    <div class="post-userinfo-joined">Joined: {joined_date}</div>
+                                    <div class="post-userinfo-posts">Posts: {post_count}</div>
+                                </div>
+                                <div class="post-body">
+                                    {content_formatted}
+                                </div>
                             </div>
                         </div>
                         """
                     
                     html_content += """
+                            </div>
+                        </div>
                     </body>
                     </html>
                     """
@@ -2225,12 +2343,51 @@ Details: {self.param_details_text.toPlainText()}"""
                     self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
                 else:
                     self.forum_messages.setHtml("""
-                    <div style='color:#AAAAAA; text-align:center; padding:20px; background-color:#121212;'>
-                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
-                            <strong>Parameter Forum</strong>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                background-color: #f5f5f5;
+                                margin: 0;
+                                padding: 10px;
+                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-size: 13px;
+                                color: #333333;
+                            }
+                            .forum-header {
+                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
+                                color: white;
+                                padding: 8px 12px;
+                                font-weight: bold;
+                                border-radius: 5px 5px 0 0;
+                                border: 1px solid #1E5799;
+                                font-size: 14px;
+                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                            }
+                            .forum-wrapper {
+                                border: 1px solid #cccccc;
+                                border-radius: 5px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                background-color: white;
+                                margin-bottom: 15px;
+                            }
+                            .empty-message {
+                                padding: 40px 20px;
+                                text-align: center;
+                                color: #777;
+                                font-size: 14px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="forum-wrapper">
+                            <div class="forum-header">Parameter Forum - Discussion</div>
+                            <div class="empty-message">
+                                No forum posts yet. Save a parameter to start the conversation.
+                            </div>
                         </div>
-                        <p style="color:#888; margin-top:30px;">No forum posts yet. Save a parameter to start the conversation.</p>
-                    </div>
+                    </body>
+                    </html>
                     """)
             else:
                 # Try to fetch from Realtime Database
@@ -2241,13 +2398,118 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
                 
                 if forum_data:
-                    # Create a traditional forum-style layout
+                    # Create vBulletin-style forum layout
                     html_content = """
                     <html>
-                    <body style="background-color:#121212; margin:0; padding:5px; font-family:Arial, sans-serif;">
-                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
-                            <strong>Parameter Forum</strong> — Most recent posts first
-                        </div>
+                    <head>
+                        <style>
+                            body {
+                                background-color: #f5f5f5;
+                                margin: 0;
+                                padding: 10px;
+                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-size: 13px;
+                                color: #333333;
+                            }
+                            .forum-header {
+                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
+                                color: white;
+                                padding: 8px 12px;
+                                font-weight: bold;
+                                border-radius: 5px 5px 0 0;
+                                border: 1px solid #1E5799;
+                                font-size: 14px;
+                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                            }
+                            .forum-wrapper {
+                                border: 1px solid #cccccc;
+                                border-radius: 5px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                background-color: white;
+                                margin-bottom: 15px;
+                            }
+                            .forum-thread {
+                                margin-bottom: 10px;
+                            }
+                            .post {
+                                border-bottom: 1px solid #e6e6e6;
+                                padding: 0;
+                                margin: 0;
+                            }
+                            .post:last-child {
+                                border-bottom: none;
+                            }
+                            .post-header {
+                                background-color: #f2f6f8;
+                                padding: 6px 10px;
+                                font-size: 12px;
+                                border-bottom: 1px solid #e6e6e6;
+                                color: #5a7f97;
+                            }
+                            .post-date {
+                                float: right;
+                                color: #888888;
+                            }
+                            .post-user {
+                                font-weight: bold;
+                                color: #4273A3;
+                            }
+                            .post-content {
+                                padding: 12px 15px;
+                                line-height: 1.5;
+                            }
+                            .post-content-wrapper {
+                                display: flex;
+                            }
+                            .post-userinfo {
+                                background-color: #f9f9f9;
+                                border-right: 1px solid #e6e6e6;
+                                width: 150px;
+                                padding: 12px;
+                                color: #555;
+                                font-size: 12px;
+                            }
+                            .post-userinfo-name {
+                                font-weight: bold;
+                                color: #4273A3;
+                                margin-bottom: 6px;
+                                font-size: 13px;
+                            }
+                            .post-userinfo-title {
+                                color: #777;
+                                font-size: 11px;
+                                margin-bottom: 8px;
+                            }
+                            .post-userinfo-joined {
+                                font-size: 11px;
+                                margin-top: 10px;
+                                color: #888;
+                            }
+                            .post-userinfo-posts {
+                                font-size: 11px;
+                                margin-top: 5px;
+                                color: #888;
+                            }
+                            .post-body {
+                                padding: 15px;
+                                flex-grow: 1;
+                            }
+                            .current-user .post-userinfo-name {
+                                color: #B33100;
+                            }
+                            .current-user .post-userinfo {
+                                background-color: #FFF8E8;
+                            }
+                            .current-user .post-header {
+                                background-color: #FDF1D8;
+                                color: #B86D3F;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="forum-wrapper">
+                            <div class="forum-header">Parameter Forum - Discussion</div>
+                            <div class="forum-thread">
                     """
                     
                     # Convert to list and sort by timestamp (newest first for forum style)
@@ -2274,35 +2536,48 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Format timestamp
                         if isinstance(timestamp, (int, float)):
                             timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
-                            time_str = timestamp_dt.strftime("%b %d, %Y at %I:%M %p").replace(" 0", " ")
+                            date_str = timestamp_dt.strftime("%B %d, %Y")
+                            time_str = timestamp_dt.strftime("%I:%M %p").replace(" 0", " ")
+                            full_time = f"{date_str} at {time_str}"
                         else:
-                            time_str = "Unknown time"
+                            full_time = "Unknown time"
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
-                        
-                        # Use a different background color for current user posts
-                        bg_color = "#1E3A5F" if is_current_user else "#232323"
-                        header_color = "#2C5999" if is_current_user else "#333333"
-                        border_color = "#375D99" if is_current_user else "#444444"
+                        current_user_class = "current-user" if is_current_user else ""
                         
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Create a visually appealing forum post
+                        # Generate random stats for vBulletin style
+                        user_title = "VCM Expert" if is_current_user else "Forum Member"
+                        joined_date = "January 2023"
+                        post_count = random.randint(10, 500)
+                        
+                        # Create a vBulletin-style post
                         html_content += f"""
-                        <div style="margin-bottom:15px; border:1px solid {border_color}; border-radius:5px; overflow:hidden;">
-                            <div style="background-color:{header_color}; padding:8px 12px; display:flex; border-bottom:1px solid {border_color};">
-                                <div style="font-weight:bold; color:white; font-size:13px;">{display_name}</div>
-                                <div style="margin-left:auto; color:#BBB; font-size:11px;">{time_str}</div>
+                        <div class="post {current_user_class}">
+                            <div class="post-header">
+                                <span class="post-date">{full_time}</span>
+                                <span class="post-user">{display_name}</span>
                             </div>
-                            <div style="background-color:{bg_color}; padding:12px; color:#DDD; font-size:13px; line-height:1.5;">
-                                {content_formatted}
+                            <div class="post-content-wrapper">
+                                <div class="post-userinfo">
+                                    <div class="post-userinfo-name">{display_name}</div>
+                                    <div class="post-userinfo-title">{user_title}</div>
+                                    <div class="post-userinfo-joined">Joined: {joined_date}</div>
+                                    <div class="post-userinfo-posts">Posts: {post_count}</div>
+                                </div>
+                                <div class="post-body">
+                                    {content_formatted}
+                                </div>
                             </div>
                         </div>
                         """
                     
                     html_content += """
+                            </div>
+                        </div>
                     </body>
                     </html>
                     """
@@ -2314,23 +2589,101 @@ Details: {self.param_details_text.toPlainText()}"""
                     self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
                     self.forum_messages.setHtml("""
-                    <div style='color:#AAAAAA; text-align:center; padding:20px; background-color:#121212;'>
-                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
-                            <strong>Parameter Forum</strong>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                background-color: #f5f5f5;
+                                margin: 0;
+                                padding: 10px;
+                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-size: 13px;
+                                color: #333333;
+                            }
+                            .forum-header {
+                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
+                                color: white;
+                                padding: 8px 12px;
+                                font-weight: bold;
+                                border-radius: 5px 5px 0 0;
+                                border: 1px solid #1E5799;
+                                font-size: 14px;
+                                text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                            }
+                            .forum-wrapper {
+                                border: 1px solid #cccccc;
+                                border-radius: 5px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                background-color: white;
+                                margin-bottom: 15px;
+                            }
+                            .empty-message {
+                                padding: 40px 20px;
+                                text-align: center;
+                                color: #777;
+                                font-size: 14px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="forum-wrapper">
+                            <div class="forum-header">Parameter Forum - Discussion</div>
+                            <div class="empty-message">
+                                No forum posts yet. Save a parameter to start the conversation.
+                            </div>
                         </div>
-                        <p style="color:#888; margin-top:30px;">No forum posts yet. Save a parameter to start the conversation.</p>
-                    </div>
+                    </body>
+                    </html>
                     """)
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
             self.forum_messages.setHtml(f"""
-            <div style='color:#FF5555; text-align:center; padding:20px; background-color:#121212;'>
-                <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
-                    <strong>Parameter Forum</strong>
+            <html>
+            <head>
+                <style>
+                    body {{
+                        background-color: #f5f5f5;
+                        margin: 0;
+                        padding: 10px;
+                        font-family: Tahoma, Verdana, Arial, sans-serif;
+                        font-size: 13px;
+                        color: #333333;
+                    }}
+                    .forum-header {{
+                        background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
+                        color: white;
+                        padding: 8px 12px;
+                        font-weight: bold;
+                        border-radius: 5px 5px 0 0;
+                        border: 1px solid #1E5799;
+                        font-size: 14px;
+                        text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                    }}
+                    .forum-wrapper {{
+                        border: 1px solid #cccccc;
+                        border-radius: 5px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        background-color: white;
+                        margin-bottom: 15px;
+                    }}
+                    .error-message {{
+                        padding: 20px;
+                        text-align: center;
+                        color: #cc0000;
+                        font-size: 14px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="forum-wrapper">
+                    <div class="forum-header">Parameter Forum - Error</div>
+                    <div class="error-message">
+                        Error loading forum posts: {str(e)}
+                    </div>
                 </div>
-                <p style="color:#FF5555; margin-top:30px;">Error loading forum posts: {str(e)}</p>
-            </div>
+            </body>
+            </html>
             """)
 
     def clean_parameters_collection(self):
