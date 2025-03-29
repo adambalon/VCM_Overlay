@@ -1067,7 +1067,7 @@ class VCMOverlay(QMainWindow):
         self.forum_container.setObjectName("forumContainer")
         self.forum_container.setStyleSheet("""
             #forumContainer {
-                background-color: #111111;
+                background-color: #000000;
                 border: 1px solid #222222;
                 border-radius: 8px;
                 margin-top: 10px;
@@ -1107,11 +1107,11 @@ class VCMOverlay(QMainWindow):
         self.forum_scroll_area.setMinimumHeight(150)
         self.forum_scroll_area.setStyleSheet("""
             QScrollArea {
-                background-color: #121318;
+                background-color: #000000;
                 border: none;
             }
             QScrollBar:vertical {
-                background: #1A1A24;
+                background: #000000;
                 width: 10px;
                 margin: 0px;
             }
@@ -1130,6 +1130,7 @@ class VCMOverlay(QMainWindow):
         
         # Create a widget to hold all forum posts
         self.forum_posts_container = QWidget()
+        self.forum_posts_container.setStyleSheet("background-color: #000000;")
         self.forum_posts_layout = QVBoxLayout(self.forum_posts_container)
         self.forum_posts_layout.setContentsMargins(10, 10, 10, 10)
         self.forum_posts_layout.setSpacing(16)  # Space between posts
