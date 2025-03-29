@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 
                             QLabel, QPushButton, QTextEdit, QTabWidget, QLineEdit, 
 
-                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView)
+                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox)
 
 from PyQt5.QtCore import QTimer, Qt, QEvent, QRect, QSize
 
@@ -69,6 +69,7 @@ import time
 import datetime
 import re
 import random
+import keyring
 
 # Import Firebase service module
 try:
@@ -339,6 +340,21 @@ class LoginDialog(QDialog):
         self.password_edit.setPlaceholderText("Enter your password")
         form_layout.addRow("Password:", self.password_edit)
         
+        # Remember me checkbox
+        self.remember_checkbox = QCheckBox("Remember me")
+        form_layout.addRow("", self.remember_checkbox)
+        
+        # Try to load saved credentials
+        try:
+            saved_creds = keyring.get_password("VCMOverlay", "login_credentials")
+            if saved_creds:
+                creds = json.loads(saved_creds)
+                self.email_edit.setText(creds.get("email", ""))
+                self.password_edit.setText(creds.get("password", ""))
+                self.remember_checkbox.setChecked(True)
+        except:
+            pass
+        
         self.form_layout.addLayout(form_layout)
         
         # Login button
@@ -459,6 +475,20 @@ class LoginDialog(QDialog):
             success, message, user_data = firebase_service.sign_in_with_email_password(email, password)
             
             if success:
+                # Store credentials if remember me is checked
+                if self.remember_checkbox.isChecked():
+                    try:
+                        creds = json.dumps({"email": email, "password": password})
+                        keyring.set_password("VCMOverlay", "login_credentials", creds)
+                    except Exception as e:
+                        print(f"Failed to save credentials: {e}")
+                else:
+                    # Clear saved credentials if remember me is unchecked
+                    try:
+                        keyring.delete_password("VCMOverlay", "login_credentials")
+                    except:
+                        pass
+                        
                 self.status_label.setText(f"Signed in as {user_data.get('email', 'Unknown')}")
                 self.accept()  # Close dialog with success
             else:
@@ -2207,7 +2237,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             .post {
                                 border-bottom: 1px solid #333333;
                                 padding: 0;
-                                margin: 0 0 10px 0;
+                                margin: 0 0 20px 0;
                             }
                             .post:last-child {
                                 border-bottom: none;
@@ -2230,8 +2260,10 @@ Details: {self.param_details_text.toPlainText()}"""
                             }
                             .post-content-wrapper {
                                 display: flex;
-                                margin-bottom: 15px;
+                                margin-bottom: 20px;
                                 background-color: #1A1A1A;
+                                border-radius: 0 0 4px 4px;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                             }
                             .post-userinfo {
                                 background-color: #1C1C1C;
@@ -2426,7 +2458,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             .post {
                                 border-bottom: 1px solid #333333;
                                 padding: 0;
-                                margin: 0 0 10px 0;
+                                margin: 0 0 20px 0;
                             }
                             .post:last-child {
                                 border-bottom: none;
@@ -2449,8 +2481,10 @@ Details: {self.param_details_text.toPlainText()}"""
                             }
                             .post-content-wrapper {
                                 display: flex;
-                                margin-bottom: 15px;
+                                margin-bottom: 20px;
                                 background-color: #1A1A1A;
+                                border-radius: 0 0 4px 4px;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                             }
                             .post-userinfo {
                                 background-color: #1C1C1C;
