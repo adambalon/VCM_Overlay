@@ -61,7 +61,7 @@ from functools import partial
 # Import Firebase service module
 try:
     import firebase_service
-    FIREBASE_AVAILABLE = firebase_service.is_available()
+    FIREBASE_AVAILABLE = True
     print("Firebase service successfully imported")
 except ImportError as e:
     FIREBASE_AVAILABLE = False
@@ -478,6 +478,21 @@ class VCMOverlay(QMainWindow):
         self.last_parameter_text = None
         self.current_parameter_edit_hwnd = None
         
+        # Initialize UI elements to None to prevent attribute errors
+        self.parameter_header_label = None
+        self.param_type_label = None
+        self.param_id_label = None
+        self.param_name_label = None
+        self.param_desc_label = None
+        self.param_details_text = None
+        self.git_status_label = None
+        self.forum_messages = None
+        self.save_to_cloud_button = None
+        self.status_label = None
+        self.auth_button = None
+        self.user_label = None
+        self.change_log_button = None
+        
         # Debug log init
         self.debug_log = []
         
@@ -490,6 +505,8 @@ class VCMOverlay(QMainWindow):
             firebase_initialized = self.init_firebase()
             if firebase_initialized:
                 self.log_debug("Firebase initialized successfully")
+                # Now that UI is initialized, update auth status
+                self.update_auth_status()
             else:
                 self.log_debug("Firebase initialization failed")
 
@@ -1330,9 +1347,10 @@ class VCMOverlay(QMainWindow):
             
             if success:
                 firebase_initialized = True
-                self.save_to_cloud_button.setEnabled(True)
+                if hasattr(self, 'save_to_cloud_button') and self.save_to_cloud_button:
+                    self.save_to_cloud_button.setEnabled(True)
                 self.log_debug("Firebase initialized successfully")
-                self.update_auth_status()
+                # Don't update auth status here yet
                 return True
             else:
                 self.log_debug("Firebase initialization failed")
