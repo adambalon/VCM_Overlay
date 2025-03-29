@@ -2146,6 +2146,7 @@ Details: {self.param_details_text.toPlainText()}"""
                 'content': content,
                 'param_id': param_id,
                 'timestamp': datetime.datetime.now(),
+                'status': 'pending'  # Default status for new posts
             }
             
             # Save to Firestore
@@ -2337,41 +2338,46 @@ Details: {self.param_details_text.toPlainText()}"""
                             .post-header {
                                 display: flex;
                                 align-items: center;
+                                justify-content: space-between;
                                 padding: 10px 12px;
                                 border-bottom: 1px solid #222;
                                 background-color: #151515;
                             }
                             
-                            .post-avatar {
-                                width: 30px;
-                                height: 30px;
-                                margin-right: 10px;
-                                border-radius: 4px;
-                                background: linear-gradient(135deg, #222 0%, #333 100%);
-                                color: #DDD;
+                            .username-container {
                                 display: flex;
                                 align-items: center;
-                                justify-content: center;
-                                font-size: 14px;
+                            }
+                            
+                            .username {
                                 font-weight: 600;
-                                flex-shrink: 0;
-                                overflow: hidden;
-                            }
-                            
-                            .post.current-user .post-avatar {
-                                background: linear-gradient(135deg, #FF6600 0%, #FF9900 100%);
-                                color: #FFF;
-                            }
-                            
-                            .post-meta {
-                                flex-grow: 1;
-                            }
-                            
-                            .author-name {
-                                font-weight: 500;
                                 color: #DDD;
                                 font-size: 14px;
-                                margin-bottom: 2px;
+                            }
+                            
+                            .post-status {
+                                font-size: 11px;
+                                padding: 2px 6px;
+                                border-radius: 3px;
+                                font-weight: 500;
+                                margin-left: 8px;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            }
+                            
+                            .status-pending {
+                                background-color: #3D4652;
+                                color: #8DA0BC;
+                            }
+                            
+                            .status-accepted {
+                                background-color: #1D4B2C;
+                                color: #67E889;
+                            }
+                            
+                            .status-rejected {
+                                background-color: #4B1D1D;
+                                color: #E86767;
                             }
                             
                             .post-time {
@@ -2489,26 +2495,20 @@ Details: {self.param_details_text.toPlainText()}"""
                         if not formatted_content:
                             formatted_content = f"<p>{content.replace('\n', '<br>')}</p>"
                         
-                        # Create avatar with initials (properly handling case if name is empty)
-                        if display_name and display_name.strip():
-                            # Get initials from name (up to 2 characters)
-                            name_parts = display_name.strip().split()
-                            if len(name_parts) >= 2:
-                                avatar_text = (name_parts[0][0] + name_parts[-1][0]).upper()
-                            else:
-                                avatar_text = display_name[0].upper() if display_name else "?"
-                        else:
-                            avatar_text = "?"
+                        # Randomly assign a status for demonstration purposes
+                        # In a real system, this would come from the database
+                        status = post_data.get('status', random.choice(['pending', 'accepted', 'rejected']))
+                        status_class = f"status-{status}"
                         
-                        # Create a tech-inspired post
+                        # Create a forum post with full username and status indicator
                         html_content += f"""
                         <div class="post {current_user_class}">
                             <div class="post-header">
-                                <div class="post-avatar">{avatar_text}</div>
-                                <div class="post-meta">
-                                    <div class="author-name">{display_name}</div>
-                                    <div class="post-time">{full_time}</div>
+                                <div class="username-container">
+                                    <div class="username">{display_name}</div>
+                                    <div class="post-status {status_class}">{status.upper()}</div>
                                 </div>
+                                <div class="post-time">{full_time}</div>
                             </div>
                             <div class="post-content">
                                 {formatted_content}
