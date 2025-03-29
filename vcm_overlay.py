@@ -283,7 +283,37 @@ class LoginDialog(QDialog):
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 20px;")
         layout.addWidget(title_label)
         
-        # Email/password login
+        # Switch between login and create account mode
+        self.mode = "login"  # Default mode is login
+        self.mode_switch_button = QPushButton("Need to create an account?")
+        self.mode_switch_button.setStyleSheet("color: #2196F3; background: transparent; border: none;")
+        self.mode_switch_button.clicked.connect(self.toggle_mode)
+        layout.addWidget(self.mode_switch_button)
+        
+        # Form container
+        self.form_container = QWidget()
+        self.form_layout = QVBoxLayout(self.form_container)
+        layout.addWidget(self.form_container)
+        
+        # Ensure we always show login form first
+        self.setup_login_form()
+        
+        # Add a status label
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: #F44336; margin-top: 10px;")
+        layout.addWidget(self.status_label)
+        
+        # Add cancel button
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+    
+    def setup_login_form(self):
+        """Set up the login form"""
+        # Clear existing form
+        self.clear_form()
+        
+        # Email/password login form
         form_layout = QFormLayout()
         
         # Email field
@@ -297,7 +327,7 @@ class LoginDialog(QDialog):
         self.password_edit.setPlaceholderText("Enter your password")
         form_layout.addRow("Password:", self.password_edit)
         
-        layout.addLayout(form_layout)
+        self.form_layout.addLayout(form_layout)
         
         # Login button
         login_button = QPushButton("Login")
@@ -318,6 +348,43 @@ class LoginDialog(QDialog):
             }
         """)
         login_button.clicked.connect(self.handle_login)
+        self.form_layout.addWidget(login_button)
+        
+        # Update mode button text
+        self.mode_switch_button.setText("Need to create an account?")
+        self.mode = "login"
+    
+    def setup_create_account_form(self):
+        """Set up the create account form"""
+        # Clear existing form
+        self.clear_form()
+        
+        # Create account form
+        form_layout = QFormLayout()
+        
+        # Email field
+        self.email_edit = QLineEdit()
+        self.email_edit.setPlaceholderText("Enter your email address")
+        form_layout.addRow("Email:", self.email_edit)
+        
+        # Screenname field
+        self.screenname_edit = QLineEdit()
+        self.screenname_edit.setPlaceholderText("Choose a unique screenname")
+        form_layout.addRow("Screenname:", self.screenname_edit)
+        
+        # Password field
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.password_edit.setPlaceholderText("Enter your password")
+        form_layout.addRow("Password:", self.password_edit)
+        
+        # Confirm password field
+        self.confirm_password_edit = QLineEdit()
+        self.confirm_password_edit.setEchoMode(QLineEdit.Password)
+        self.confirm_password_edit.setPlaceholderText("Confirm your password")
+        form_layout.addRow("Confirm Password:", self.confirm_password_edit)
+        
+        self.form_layout.addLayout(form_layout)
         
         # Create account button
         create_button = QPushButton("Create Account")
@@ -338,22 +405,32 @@ class LoginDialog(QDialog):
             }
         """)
         create_button.clicked.connect(self.handle_create_account)
+        self.form_layout.addWidget(create_button)
         
-        # Add buttons to a horizontal layout
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addWidget(login_button)
-        buttons_layout.addWidget(create_button)
-        layout.addLayout(buttons_layout)
-        
-        # Add a status label
-        self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #F44336; margin-top: 10px;")
-        layout.addWidget(self.status_label)
-        
-        # Add cancel button
-        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        # Update mode button text
+        self.mode_switch_button.setText("Already have an account? Sign in")
+        self.mode = "create"
+    
+    def clear_form(self):
+        """Clear the form layout"""
+        # Remove all widgets from the form layout
+        while self.form_layout.count():
+            item = self.form_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                # Clear nested layouts too
+                while item.layout().count():
+                    nested_item = item.layout().takeAt(0)
+                    if nested_item.widget():
+                        nested_item.widget().deleteLater()
+    
+    def toggle_mode(self):
+        """Toggle between login and create account modes"""
+        if self.mode == "login":
+            self.setup_create_account_form()
+        else:
+            self.setup_login_form()
     
     def handle_login(self):
         """Handle login button click"""
@@ -395,10 +472,18 @@ class LoginDialog(QDialog):
     def handle_create_account(self):
         """Handle create account button click"""
         email = self.email_edit.text().strip()
+        screenname = self.screenname_edit.text().strip()
         password = self.password_edit.text()
+        confirm_password = self.confirm_password_edit.text()
         
-        if not email or not password:
-            self.status_label.setText("Please enter both email and password")
+        # Validate inputs
+        if not email or not password or not screenname:
+            self.status_label.setText("Please fill in all fields")
+            return
+        
+        if password != confirm_password:
+            self.status_label.setText("Passwords do not match")
+            QMessageBox.warning(self, "Validation Error", "Passwords do not match.")
             return
         
         if len(password) < 6:
@@ -406,10 +491,24 @@ class LoginDialog(QDialog):
             QMessageBox.warning(self, "Validation Error", "Password must be at least 6 characters.")
             return
         
+        if len(screenname) < 3:
+            self.status_label.setText("Screenname must be at least 3 characters")
+            QMessageBox.warning(self, "Validation Error", "Screenname must be at least 3 characters.")
+            return
+        
+        # Check if screenname is available
+        self.status_label.setText("Checking screenname availability...")
+        screenname_available = firebase_service.check_screenname_availability(screenname)
+        
+        if not screenname_available:
+            self.status_label.setText("Screenname is already taken")
+            QMessageBox.warning(self, "Validation Error", "This screenname is already taken. Please choose a different one.")
+            return
+        
         self.status_label.setText("Creating account...")
         
         try:
-            success, message, user_data = firebase_service.create_user_with_email_password(email, password)
+            success, message, user_data = firebase_service.create_user_with_email_password(email, password, screenname)
             
             if success:
                 self.status_label.setText("Account created successfully!")
@@ -1075,7 +1174,25 @@ class VCMOverlay(QMainWindow):
         
         if current_user:
             # User is logged in
-            self.user_label.setText(f"Signed in as: {current_user.get('email', 'Unknown')}")
+            user_email = current_user.get('email', 'Unknown')
+            
+            # Get the user's screenname from Firestore
+            screenname = None
+            try:
+                if firebase_service.firestore_db:
+                    user_doc = firebase_service.firestore_db.collection('users').document(current_user['uid']).get()
+                    if user_doc.exists:
+                        user_data = user_doc.to_dict()
+                        screenname = user_data.get('screenname')
+            except Exception as e:
+                self.log_debug(f"Error getting user screenname: {str(e)}")
+            
+            # Display either screenname or email
+            if screenname:
+                self.user_label.setText(f"Signed in as: {screenname}")
+            else:
+                self.user_label.setText(f"Signed in as: {user_email}")
+                
             self.auth_button.setText("Logout")
             if hasattr(self, 'save_to_cloud_button'):
                 self.save_to_cloud_button.setEnabled(True)
@@ -1931,99 +2048,6 @@ Details: {self.param_details_text.toPlainText()}"""
             }
         """)
 
-    def load_parameter_forum(self, param_id):
-        """Load forum messages for a parameter"""
-        if not hasattr(self, 'forum_messages'):
-            self.log_debug("Forum messages widget not available")
-            return
-            
-        self.forum_messages.clear()
-        self.log_debug(f"Loading forum for parameter {param_id}...")
-        
-        if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
-            self.forum_messages.setText("Forum not available. Please login to access the forum.")
-            return
-        
-        try:
-            # Try to fetch forum posts from Firestore
-            if firebase_service.firestore_db:
-                # Get forum collection for this parameter
-                forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
-                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
-                
-                if forum_posts and len(forum_posts) > 0:
-                    # Process forum posts
-                    forum_text = ""
-                    for post in forum_posts:
-                        post_data = post.to_dict()
-                        user = post_data.get('user', 'Anonymous')
-                        timestamp = post_data.get('timestamp')
-                        content = post_data.get('content', '')
-                        
-                        # Format timestamp
-                        if isinstance(timestamp, datetime.datetime):
-                            timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                        else:
-                            timestamp_str = str(timestamp)
-                        
-                        # Add to forum text with better formatting
-                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
-                    
-                    # Update forum messages
-                    if forum_text:
-                        self.forum_messages.setText(forum_text.strip())
-                        self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
-                    else:
-                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
-                else:
-                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
-            else:
-                # Try to fetch from Realtime Database
-                current_user = firebase_service.get_current_user()
-                db = firebase_service.firebase.database()
-                
-                # Get forum data for this parameter
-                forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
-                
-                if forum_data:
-                    # Process forum posts
-                    forum_text = ""
-                    # Convert to list and sort by timestamp (newest first)
-                    posts = []
-                    for post_id, post_data in forum_data.items():
-                        posts.append(post_data)
-                    
-                    # Sort posts by timestamp (newest first)
-                    posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-                    
-                    for post_data in posts:
-                        user = post_data.get('user', 'Anonymous')
-                        timestamp = post_data.get('timestamp')
-                        content = post_data.get('content', '')
-                        
-                        # Format timestamp
-                        if isinstance(timestamp, (int, float)):
-                            timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
-                            timestamp_str = timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
-                        else:
-                            timestamp_str = str(timestamp)
-                        
-                        # Add to forum text with better formatting
-                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {user}\n{'-'*50}\n{content}\n"
-                    
-                    # Update forum messages
-                    if forum_text:
-                        self.forum_messages.setText(forum_text.strip())
-                        self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
-                    else:
-                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
-                else:
-                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
-        
-        except Exception as e:
-            self.log_debug(f"Error loading forum posts: {str(e)}")
-            self.forum_messages.setText(f"Error loading forum posts: {str(e)}")
-    
     def save_to_forum(self, param_id, user_email, timestamp, content):
         """Save a new post to the parameter forum"""
         if not hasattr(self, 'forum_messages'):
@@ -2035,9 +2059,28 @@ Details: {self.param_details_text.toPlainText()}"""
             return False
         
         try:
+            current_user = firebase_service.get_current_user()
+            
+            # Get the user's screenname from Firestore
+            screenname = None
+            try:
+                if firebase_service.firestore_db:
+                    user_doc = firebase_service.firestore_db.collection('users').document(current_user['uid']).get()
+                    if user_doc.exists:
+                        user_data = user_doc.to_dict()
+                        screenname = user_data.get('screenname')
+            except Exception as e:
+                self.log_debug(f"Error getting user screenname: {str(e)}")
+            
+            # Use screenname if available, otherwise use email
+            display_name = screenname if screenname else user_email
+            
             # Prepare post data
             post_data = {
-                'user': user_email,
+                'user_id': current_user['uid'],
+                'user_email': user_email,
+                'user_screenname': screenname,
+                'display_name': display_name,
                 'content': content,
                 'param_id': param_id,
                 'timestamp': datetime.datetime.now(),
@@ -2071,6 +2114,114 @@ Details: {self.param_details_text.toPlainText()}"""
         except Exception as e:
             self.log_debug(f"Error saving forum post: {str(e)}")
             return False
+            
+    def load_parameter_forum(self, param_id):
+        """Load forum messages for a parameter"""
+        if not hasattr(self, 'forum_messages'):
+            self.log_debug("Forum messages widget not available")
+            return
+            
+        self.forum_messages.clear()
+        self.log_debug(f"Loading forum for parameter {param_id}...")
+        
+        if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
+            self.forum_messages.setText("Forum not available. Please login to access the forum.")
+            return
+        
+        try:
+            # Try to fetch forum posts from Firestore
+            if firebase_service.firestore_db:
+                # Get forum collection for this parameter
+                forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
+                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
+                
+                if forum_posts and len(forum_posts) > 0:
+                    # Process forum posts
+                    forum_text = ""
+                    for post in forum_posts:
+                        post_data = post.to_dict()
+                        
+                        # Get display name (prefer screenname over email)
+                        if 'display_name' in post_data:
+                            display_name = post_data.get('display_name')
+                        elif 'user_screenname' in post_data and post_data.get('user_screenname'):
+                            display_name = post_data.get('user_screenname')
+                        else:
+                            display_name = post_data.get('user_email', 'Anonymous')
+                            
+                        timestamp = post_data.get('timestamp')
+                        content = post_data.get('content', '')
+                        
+                        # Format timestamp
+                        if isinstance(timestamp, datetime.datetime):
+                            timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            timestamp_str = str(timestamp)
+                        
+                        # Add to forum text with better formatting
+                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {display_name}\n{'-'*50}\n{content}\n"
+                    
+                    # Update forum messages
+                    if forum_text:
+                        self.forum_messages.setText(forum_text.strip())
+                        self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
+                    else:
+                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                else:
+                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+            else:
+                # Try to fetch from Realtime Database
+                current_user = firebase_service.get_current_user()
+                db = firebase_service.firebase.database()
+                
+                # Get forum data for this parameter
+                forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
+                
+                if forum_data:
+                    # Process forum posts
+                    forum_text = ""
+                    # Convert to list and sort by timestamp (newest first)
+                    posts = []
+                    for post_id, post_data in forum_data.items():
+                        posts.append(post_data)
+                    
+                    # Sort posts by timestamp (newest first)
+                    posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+                    
+                    for post_data in posts:
+                        # Get display name (prefer screenname over email)
+                        if 'display_name' in post_data:
+                            display_name = post_data.get('display_name')
+                        elif 'user_screenname' in post_data and post_data.get('user_screenname'):
+                            display_name = post_data.get('user_screenname')
+                        else:
+                            display_name = post_data.get('user_email', 'Anonymous')
+                            
+                        timestamp = post_data.get('timestamp')
+                        content = post_data.get('content', '')
+                        
+                        # Format timestamp
+                        if isinstance(timestamp, (int, float)):
+                            timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
+                            timestamp_str = timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            timestamp_str = str(timestamp)
+                        
+                        # Add to forum text with better formatting
+                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {display_name}\n{'-'*50}\n{content}\n"
+                    
+                    # Update forum messages
+                    if forum_text:
+                        self.forum_messages.setText(forum_text.strip())
+                        self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
+                    else:
+                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                else:
+                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+        
+        except Exception as e:
+            self.log_debug(f"Error loading forum posts: {str(e)}")
+            self.forum_messages.setText(f"Error loading forum posts: {str(e)}")
 
     def clean_parameters_collection(self):
         """Clean up old parameters from the parameters collection"""

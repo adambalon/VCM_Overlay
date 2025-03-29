@@ -140,12 +140,36 @@ def sign_in_with_email_password(email, password):
         else:
             return False, f"Authentication error: {error_message}", None
 
-def create_user_with_email_password(email, password):
+def check_screenname_availability(screenname):
+    """Check if a screenname is available.
+    
+    Args:
+        screenname (str): Screenname to check
+        
+    Returns:
+        bool: True if screenname is available, False if already taken
+    """
+    if not firestore_db:
+        print("Firestore not available, cannot check screenname")
+        return False
+    
+    try:
+        # Query users collection for screenname
+        users_ref = firestore_db.collection('users').where('screenname', '==', screenname).limit(1).get()
+        
+        # If no results, screenname is available
+        return len(users_ref) == 0
+    except Exception as e:
+        print(f"Error checking screenname availability: {str(e)}")
+        return False
+
+def create_user_with_email_password(email, password, screenname=None):
     """Create a new user with email and password.
     
     Args:
         email (str): User's email
         password (str): User's password
+        screenname (str, optional): User's screenname
         
     Returns:
         tuple: (success, message, user_data)
@@ -157,6 +181,11 @@ def create_user_with_email_password(email, password):
         return False, "Firebase is not initialized", None
     
     try:
+        # If screenname is provided, check if it's available
+        if screenname:
+            if not check_screenname_availability(screenname):
+                return False, "Screenname is already taken", None
+        
         # Create user with Firebase Auth
         user = auth_instance.create_user_with_email_and_password(email, password)
         
@@ -176,23 +205,38 @@ def create_user_with_email_password(email, password):
             if firestore_db:
                 # Add user to Firestore with basic profile
                 print(f"Creating user profile in Firestore for {email}...")
-                firestore_db.collection('users').document(user_data['uid']).set({
+                user_profile = {
                     'email': user_data['email'],
                     'created_at': firestore.SERVER_TIMESTAMP,
                     'role': 'user',  # Default role
                     'trusted': False  # Not trusted by default
-                })
+                }
+                
+                # Add screenname if provided
+                if screenname:
+                    user_profile['screenname'] = screenname
+                
+                # Save to Firestore
+                firestore_db.collection('users').document(user_data['uid']).set(user_profile)
                 print(f"User profile created in Firestore successfully")
             else:
                 print("Firestore not available, falling back to Realtime Database")
                 # Add user to Realtime Database with basic profile
                 if db_instance:
-                    db_instance.child('users').child(user_data['uid']).set({
+                    user_profile = {
                         'email': user_data['email'],
                         'created_at': {".sv": "timestamp"},
                         'role': 'user',  # Default role
                         'trusted': False  # Not trusted by default
-                    }, token=user_data['token'])
+                    }
+                    
+                    # Add screenname if provided
+                    if screenname:
+                        user_profile['screenname'] = screenname
+                    
+                    # Save to Realtime Database
+                    db_instance.child('users').child(user_data['uid']).set(
+                        user_profile, token=user_data['token'])
                     print(f"User profile created in Realtime Database")
         except Exception as db_error:
             print(f"Error creating user profile in database: {str(db_error)}")
