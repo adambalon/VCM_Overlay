@@ -2187,7 +2187,7 @@ Details: {self.param_details_text.toPlainText()}"""
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
-            self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>Forum not available. Please login to access the forum.</div>")
+            self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:40px 20px;background-color:#1E1E1E;border:1px solid #333333;border-radius:12px;margin:20px;'>Forum not available. Please login to access the forum.</div>")
             return
         
         try:
@@ -2220,32 +2220,29 @@ Details: {self.param_details_text.toPlainText()}"""
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                                margin-bottom: 20px;
                             }
                             .forum-wrapper {
-                                border: 1px solid #333333;
-                                border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                                background-color: #1E1E1E;
+                                border: none;
+                                background-color: transparent;
                                 margin-bottom: 15px;
                             }
                             .forum-thread {
-                                margin-bottom: 10px;
+                                margin-bottom: 0;
                                 padding: 10px;
                             }
                             .post {
-                                border-bottom: none;
+                                border: 1px solid #333333;
                                 padding: 0;
-                                margin: 0 0 30px 0;
-                                border-radius: 10px;
-                                box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+                                margin: 0 0 40px 0;
+                                border-radius: 12px;
+                                box-shadow: 0 3px 8px rgba(0,0,0,0.4);
                                 overflow: hidden;
                             }
                             .post:last-child {
-                                border-bottom: none;
-                                margin-bottom: 15px;
+                                margin-bottom: 20px;
                             }
                             .post-header {
                                 background-color: #252525;
@@ -2253,7 +2250,7 @@ Details: {self.param_details_text.toPlainText()}"""
                                 font-size: 12px;
                                 border-bottom: 1px solid #333333;
                                 color: #AAAAAA;
-                                border-radius: 10px 10px 0 0;
+                                border-radius: 12px 12px 0 0;
                             }
                             .post-date {
                                 float: right;
@@ -2397,22 +2394,39 @@ Details: {self.param_details_text.toPlainText()}"""
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+                                margin-bottom: 20px;
                             }
                             .forum-wrapper {
-                                border: 1px solid #333333;
-                                border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                                background-color: #1E1E1E;
+                                border: none;
+                                background-color: transparent;
                                 margin-bottom: 15px;
+                            }
+                            .forum-thread {
+                                margin-bottom: 0;
+                                padding: 10px;
+                            }
+                            .post {
+                                border: 1px solid #333333;
+                                padding: 0;
+                                margin: 0 0 40px 0;
+                                border-radius: 12px;
+                                box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                                overflow: hidden;
+                            }
+                            .post:last-child {
+                                margin-bottom: 20px;
                             }
                             .empty-message {
                                 padding: 40px 20px;
                                 text-align: center;
                                 color: #999999;
                                 font-size: 14px;
+                                background-color: #1E1E1E;
+                                border: 1px solid #333333;
+                                border-radius: 12px;
+                                margin-top: 20px;
                             }
                         </style>
                     </head>
@@ -2459,10 +2473,14 @@ Details: {self.param_details_text.toPlainText()}"""
                         margin-bottom: 15px;
                     }}
                     .error-message {{
-                        padding: 20px;
+                        padding: 40px 20px;
                         text-align: center;
                         color: #FF6666;
                         font-size: 14px;
+                        background-color: #1E1E1E;
+                        border: 1px solid #333333;
+                        border-radius: 12px;
+                        margin-top: 20px;
                     }}
                 </style>
             </head>
