@@ -1052,27 +1052,27 @@ class VCMOverlay(QMainWindow):
         self.forum_messages.setMinimumHeight(150)
         self.forum_messages.setStyleSheet("""
             QTextEdit {
-                background-color: #000000;
-                color: #FFFFFF;
+                background-color: #121212;
+                color: #DDDDDD;
                 border: 1px solid #333333;
                 border-radius: 6px;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-family: Arial, sans-serif;
                 line-height: 1.4;
                 padding: 5px;
             }
             QScrollBar:vertical {
-                background-color: #000000;
+                background-color: #1A1A1A;
                 width: 14px;
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background-color: #333333;
+                background-color: #444444;
                 min-height: 20px;
                 border-radius: 7px;
                 margin: 2px;
             }
             QScrollBar::handle:vertical:hover {
-                background-color: #444444;
+                background-color: #555555;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -2156,16 +2156,17 @@ Details: {self.param_details_text.toPlainText()}"""
             if firebase_service.firestore_db:
                 # Get forum collection for this parameter
                 forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
-                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.ASCENDING).get()  # Changed to ASCENDING for chat style
+                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()  # Change back to DESCENDING for forum style
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Create a very simple HTML structure without any complex styling
+                    # Create a traditional forum-style layout
                     html_content = """
                     <html>
-                    <body style="background-color:#000000; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                    <body style="background-color:#121212; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
+                            <strong>Parameter Forum</strong> — Most recent posts first
+                        </div>
                     """
-                    
-                    last_date = None
                     
                     for post in forum_posts:
                         post_data = post.to_dict()
@@ -2184,49 +2185,33 @@ Details: {self.param_details_text.toPlainText()}"""
                         
                         # Format timestamp
                         if isinstance(timestamp, datetime.datetime):
-                            current_date = timestamp.strftime("%Y-%m-%d")
-                            time_str = timestamp.strftime("%I:%M %p").lstrip('0')
-                            
-                            # Add date divider if it's a new day - much more subtle like in the image
-                            if last_date != current_date:
-                                html_content += f'<div style="text-align:center; margin:20px 0; color:#666666; font-size:11px;">{timestamp.strftime("%B %d, %Y")}</div>'
-                                last_date = current_date
+                            time_str = timestamp.strftime("%b %d, %Y at %I:%M %p").replace(" 0", " ")
                         else:
                             time_str = "Unknown time"
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
                         
+                        # Use a different background color for current user posts
+                        bg_color = "#1E3A5F" if is_current_user else "#232323"
+                        header_color = "#2C5999" if is_current_user else "#333333"
+                        border_color = "#375D99" if is_current_user else "#444444"
+                        
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Format the message - based on the uploaded iPhone image styling
-                        if is_current_user:
-                            # Right-aligned blue message exactly like iPhone
-                            html_content += f"""
-                            <div align="right" style="margin:8px 0 16px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-right:5px;">
-                                    <tr>
-                                        <td bgcolor="#0B93F6" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
-                                            {content_formatted}
-                                        </td>
-                                    </tr>
-                                </table>
+                        # Create a visually appealing forum post
+                        html_content += f"""
+                        <div style="margin-bottom:15px; border:1px solid {border_color}; border-radius:5px; overflow:hidden;">
+                            <div style="background-color:{header_color}; padding:8px 12px; display:flex; border-bottom:1px solid {border_color};">
+                                <div style="font-weight:bold; color:white; font-size:13px;">{display_name}</div>
+                                <div style="margin-left:auto; color:#BBB; font-size:11px;">{time_str}</div>
                             </div>
-                            """
-                        else:
-                            # Left-aligned gray message exactly like iPhone
-                            html_content += f"""
-                            <div align="left" style="margin:8px 0 16px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-left:5px;">
-                                    <tr>
-                                        <td bgcolor="#333333" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
-                                            {content_formatted}
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="background-color:{bg_color}; padding:12px; color:#DDD; font-size:13px; line-height:1.5;">
+                                {content_formatted}
                             </div>
-                            """
+                        </div>
+                        """
                     
                     html_content += """
                     </body>
@@ -2235,11 +2220,18 @@ Details: {self.param_details_text.toPlainText()}"""
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
-                    # Scroll to the bottom to see newest messages
-                    self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
+                    # Scroll to the top for forum style
+                    self.forum_messages.verticalScrollBar().setValue(0)
                     self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setHtml("<div style='color:#666666;text-align:center;padding:20px;background-color:#000000;'>No forum posts yet. Save a parameter to start the conversation.</div>")
+                    self.forum_messages.setHtml("""
+                    <div style='color:#AAAAAA; text-align:center; padding:20px; background-color:#121212;'>
+                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
+                            <strong>Parameter Forum</strong>
+                        </div>
+                        <p style="color:#888; margin-top:30px;">No forum posts yet. Save a parameter to start the conversation.</p>
+                    </div>
+                    """)
             else:
                 # Try to fetch from Realtime Database
                 current_user = firebase_service.get_current_user()
@@ -2249,21 +2241,22 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
                 
                 if forum_data:
-                    # Create a very simple HTML structure without any complex styling
+                    # Create a traditional forum-style layout
                     html_content = """
                     <html>
-                    <body style="background-color:#000000; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                    <body style="background-color:#121212; margin:0; padding:5px; font-family:Arial, sans-serif;">
+                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
+                            <strong>Parameter Forum</strong> — Most recent posts first
+                        </div>
                     """
                     
-                    # Convert to list and sort by timestamp (oldest first for chat style)
+                    # Convert to list and sort by timestamp (newest first for forum style)
                     posts = []
                     for post_id, post_data in forum_data.items():
                         posts.append(post_data)
                     
-                    # Sort posts by timestamp (oldest first)
-                    posts.sort(key=lambda x: x.get('timestamp', 0))
-                    
-                    last_date = None
+                    # Sort posts by timestamp (newest first)
+                    posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
                     
                     for post_data in posts:
                         # Get display name (prefer screenname over email)
@@ -2281,49 +2274,33 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Format timestamp
                         if isinstance(timestamp, (int, float)):
                             timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
-                            current_date = timestamp_dt.strftime("%Y-%m-%d")
-                            time_str = timestamp_dt.strftime("%I:%M %p").lstrip('0')
-                            
-                            # Add date divider if it's a new day - much more subtle like in the image
-                            if last_date != current_date:
-                                html_content += f'<div style="text-align:center; margin:20px 0; color:#666666; font-size:11px;">{timestamp_dt.strftime("%B %d, %Y")}</div>'
-                                last_date = current_date
+                            time_str = timestamp_dt.strftime("%b %d, %Y at %I:%M %p").replace(" 0", " ")
                         else:
                             time_str = "Unknown time"
                         
                         # Determine if this message is from the current user
                         is_current_user = user_id == current_user_id
                         
+                        # Use a different background color for current user posts
+                        bg_color = "#1E3A5F" if is_current_user else "#232323"
+                        header_color = "#2C5999" if is_current_user else "#333333"
+                        border_color = "#375D99" if is_current_user else "#444444"
+                        
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Format the message - based on the uploaded iPhone image styling
-                        if is_current_user:
-                            # Right-aligned blue message exactly like iPhone
-                            html_content += f"""
-                            <div align="right" style="margin:8px 0 16px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-right:5px;">
-                                    <tr>
-                                        <td bgcolor="#0B93F6" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
-                                            {content_formatted}
-                                        </td>
-                                    </tr>
-                                </table>
+                        # Create a visually appealing forum post
+                        html_content += f"""
+                        <div style="margin-bottom:15px; border:1px solid {border_color}; border-radius:5px; overflow:hidden;">
+                            <div style="background-color:{header_color}; padding:8px 12px; display:flex; border-bottom:1px solid {border_color};">
+                                <div style="font-weight:bold; color:white; font-size:13px;">{display_name}</div>
+                                <div style="margin-left:auto; color:#BBB; font-size:11px;">{time_str}</div>
                             </div>
-                            """
-                        else:
-                            # Left-aligned gray message exactly like iPhone
-                            html_content += f"""
-                            <div align="left" style="margin:8px 0 16px 0;">
-                                <table cellspacing="0" cellpadding="0" border="0" style="display:inline-block; max-width:70%; margin-left:5px;">
-                                    <tr>
-                                        <td bgcolor="#333333" style="padding:10px 14px; color:white; border-radius:22px; font-size:13px;">
-                                            {content_formatted}
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="background-color:{bg_color}; padding:12px; color:#DDD; font-size:13px; line-height:1.5;">
+                                {content_formatted}
                             </div>
-                            """
+                        </div>
+                        """
                     
                     html_content += """
                     </body>
@@ -2332,15 +2309,29 @@ Details: {self.param_details_text.toPlainText()}"""
                     
                     # Update forum messages
                     self.forum_messages.setHtml(html_content)
-                    # Scroll to the bottom to see newest messages
-                    self.forum_messages.verticalScrollBar().setValue(self.forum_messages.verticalScrollBar().maximum())
+                    # Scroll to the top for forum style
+                    self.forum_messages.verticalScrollBar().setValue(0)
                     self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setHtml("<div style='color:#666666;text-align:center;padding:20px;background-color:#000000;'>No forum posts yet. Save a parameter to start the conversation.</div>")
+                    self.forum_messages.setHtml("""
+                    <div style='color:#AAAAAA; text-align:center; padding:20px; background-color:#121212;'>
+                        <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
+                            <strong>Parameter Forum</strong>
+                        </div>
+                        <p style="color:#888; margin-top:30px;">No forum posts yet. Save a parameter to start the conversation.</p>
+                    </div>
+                    """)
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
-            self.forum_messages.setHtml(f"<div style='color:#FF5555;text-align:center;padding:20px;background-color:#000000;'>Error loading forum posts: {str(e)}</div>")
+            self.forum_messages.setHtml(f"""
+            <div style='color:#FF5555; text-align:center; padding:20px; background-color:#121212;'>
+                <div style="margin-bottom:10px; padding:5px; background-color:#232323; color:#FFF; font-size:12px; border-radius:3px;">
+                    <strong>Parameter Forum</strong>
+                </div>
+                <p style="color:#FF5555; margin-top:30px;">Error loading forum posts: {str(e)}</p>
+            </div>
+            """)
 
     def clean_parameters_collection(self):
         """Clean up old parameters from the parameters collection"""
