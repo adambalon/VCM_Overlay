@@ -1107,18 +1107,21 @@ class VCMOverlay(QMainWindow):
         self.forum_scroll_area.setMinimumHeight(150)
         self.forum_scroll_area.setStyleSheet("""
             QScrollArea {
-                background-color: #0A0A0A;
+                background-color: #121318;
                 border: none;
             }
             QScrollBar:vertical {
-                background: #1A1A1A;
-                width: 12px;
+                background: #1A1A24;
+                width: 10px;
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background: #333333;
+                background: #3D6A99;
                 min-height: 20px;
-                border-radius: 6px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #4D7AAA;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -1128,8 +1131,8 @@ class VCMOverlay(QMainWindow):
         # Create a widget to hold all forum posts
         self.forum_posts_container = QWidget()
         self.forum_posts_layout = QVBoxLayout(self.forum_posts_container)
-        self.forum_posts_layout.setContentsMargins(0, 0, 0, 0)
-        self.forum_posts_layout.setSpacing(40)  # 40px spacing between posts
+        self.forum_posts_layout.setContentsMargins(10, 10, 10, 10)
+        self.forum_posts_layout.setSpacing(16)  # Space between posts
         self.forum_scroll_area.setWidget(self.forum_posts_container)
         
         # Hide the QTextEdit and add the scroll area
@@ -2275,19 +2278,18 @@ Details: {self.param_details_text.toPlainText()}"""
         """Add a post to the forum using Qt widgets"""
         # Create post container widget
         post_widget = QFrame()
-        post_widget.setFrameShape(QFrame.StyledPanel)
-        post_widget.setFrameShadow(QFrame.Plain)
+        post_widget.setFrameShape(QFrame.NoFrame)
         
-        # Set border color based on user
-        border_color = "#FFFFFF"
+        # Set style based on user
+        border_style = ""
         if is_current_user:
-            border_color = "#FF6600"
+            border_style = "border-left: 3px solid #4D7AAA;"
         
         post_widget.setStyleSheet(f"""
             QFrame {{
-                background-color: #18181B;
-                border: 1px solid {border_color};
-                border-radius: 8px;
+                background-color: #1A1E2E;
+                border-radius: 6px;
+                {border_style}
             }}
         """)
         
@@ -2299,81 +2301,114 @@ Details: {self.param_details_text.toPlainText()}"""
         # Create header widget
         header_widget = QWidget()
         header_widget.setStyleSheet("""
-            background-color: #26262C;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
+            background-color: #232840;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
         """)
         header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(20, 16, 20, 16)
+        header_layout.setContentsMargins(15, 12, 15, 12)
+        
+        # Username initials for avatar
+        initials = ""
+        if username:
+            parts = username.split()
+            if len(parts) >= 2:
+                initials = (parts[0][0] + parts[-1][0]).upper()
+            else:
+                initials = username[0].upper() if username else "?"
+                
+        # Create avatar label
+        avatar_label = QLabel(initials)
+        avatar_size = 32
+        avatar_label.setFixedSize(avatar_size, avatar_size)
+        avatar_label.setAlignment(Qt.AlignCenter)
+        
+        # Set avatar style based on user
+        avatar_bg = "#2A324D"
+        avatar_color = "#FFFFFF"
+        if is_current_user:
+            avatar_bg = "#3D6A99"
+            
+        avatar_label.setStyleSheet(f"""
+            background-color: {avatar_bg};
+            color: {avatar_color};
+            border-radius: {avatar_size // 2}px;
+            font-weight: bold;
+            font-size: 14px;
+        """)
+        
+        # Create user info container
+        user_info = QWidget()
+        user_layout = QVBoxLayout(user_info)
+        user_layout.setContentsMargins(0, 0, 0, 0)
+        user_layout.setSpacing(2)
         
         # Add username and timestamp
         username_label = QLabel(username)
         username_label.setStyleSheet("""
             color: #FFFFFF;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 13px;
         """)
         
         timestamp_label = QLabel(timestamp)
         timestamp_label.setStyleSheet("""
-            color: #8C8C95;
-            font-size: 12px;
+            color: #8D96B5;
+            font-size: 11px;
         """)
         
-        header_layout.addWidget(username_label)
-        header_layout.addStretch()
-        header_layout.addWidget(timestamp_label)
+        user_layout.addWidget(username_label)
+        user_layout.addWidget(timestamp_label)
         
-        # Create content widget
-        content_widget = QLabel(content)
-        content_widget.setWordWrap(True)
-        content_widget.setStyleSheet("""
-            color: #DDDDDD;
-            font-size: 14px;
-            padding: 22px;
-            background-color: #18181B;
-        """)
-        content_widget.setTextFormat(Qt.RichText)
+        # Status chip in header
+        status_chip = QLabel(status.upper())
+        status_chip.setAlignment(Qt.AlignCenter)
         
-        # Create footer widget
-        footer_widget = QWidget()
-        footer_widget.setStyleSheet("""
-            background-color: #1E1E24;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-        """)
-        footer_layout = QHBoxLayout(footer_widget)
-        footer_layout.setContentsMargins(20, 12, 20, 12)
+        # Set status style
+        status_bg = "#2E3450"  # Default for pending
+        status_color = "#8D96B5"
         
-        # Add status label
-        status_label = QLabel("Post Status:")
-        status_label.setStyleSheet("""
-            color: #8C8C95;
-            font-size: 13px;
-        """)
-        
-        # Set status color based on status
-        status_color = "#FFD700"  # pending (yellow)
-        if status == "accepted":
-            status_color = "#4CAF50"  # green
-        elif status == "rejected":
-            status_color = "#F44336"  # red
+        if status.lower() == "accepted":
+            status_bg = "#1A3A2A"
+            status_color = "#4CAF50"
+        elif status.lower() == "rejected":
+            status_bg = "#3A1A1A"
+            status_color = "#F44336"
             
-        status_value = QLabel(status.capitalize())
-        status_value.setStyleSheet(f"""
+        status_chip.setStyleSheet(f"""
+            background-color: {status_bg};
             color: {status_color};
-            font-size: 13px;
+            border-radius: 10px;
+            padding: 3px 8px;
+            font-size: 10px;
             font-weight: bold;
         """)
         
-        footer_layout.addWidget(status_label)
-        footer_layout.addWidget(status_value)
-        footer_layout.addStretch()
+        status_chip.setFixedHeight(20)
+        status_chip.setMinimumWidth(70)
+        
+        # Add widgets to header
+        header_layout.addWidget(avatar_label)
+        header_layout.addWidget(user_info, 1)
+        header_layout.addWidget(status_chip)
+        
+        # Create content widget with proper styling for code and text
+        content_widget = QLabel(content)
+        content_widget.setWordWrap(True)
+        content_widget.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        content_widget.setCursor(Qt.IBeamCursor)
+        content_widget.setStyleSheet("""
+            color: #D8DEF1;
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 15px;
+            background-color: #1A1E2E;
+        """)
+        content_widget.setTextFormat(Qt.RichText)
         
         # Add all sections to post
         post_layout.addWidget(header_widget)
         post_layout.addWidget(content_widget)
-        post_layout.addWidget(footer_widget)
         
         # Add post to the forum
         self.forum_posts_layout.addWidget(post_widget)
@@ -2383,35 +2418,50 @@ Details: {self.param_details_text.toPlainText()}"""
         self.clear_forum_posts()
         
         message_widget = QFrame()
-        message_widget.setFrameShape(QFrame.StyledPanel)
-        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setFrameShape(QFrame.NoFrame)
         message_widget.setStyleSheet("""
             QFrame {
-                background-color: #18181B;
-                border: 1px solid #FFFFFF;
-                border-radius: 8px;
+                background-color: #1A1E2E;
+                border-radius: 6px;
             }
         """)
         
         message_layout = QVBoxLayout(message_widget)
-        message_layout.setContentsMargins(20, 20, 20, 20)
+        message_layout.setContentsMargins(25, 30, 25, 30)
+        
+        # Add icon
+        icon_label = QLabel()
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setFixedSize(48, 48)
+        icon_label.setStyleSheet("""
+            background-color: #232840;
+            border-radius: 24px;
+            margin-bottom: 15px;
+            color: #4D7AAA;
+            font-size: 20px;
+            font-weight: bold;
+        """)
+        icon_label.setText("🔒")
         
         title_label = QLabel("Authentication Required")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
-            color: #8C8C95;
+            color: #FFFFFF;
             font-size: 16px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         """)
         
         message_label = QLabel("Please log in to view and participate in discussions")
         message_label.setAlignment(Qt.AlignCenter)
+        message_label.setWordWrap(True)
         message_label.setStyleSheet("""
-            color: #65656B;
-            font-size: 14px;
+            color: #8D96B5;
+            font-size: 13px;
+            line-height: 1.4;
         """)
         
+        message_layout.addWidget(icon_label, 0, Qt.AlignCenter)
         message_layout.addWidget(title_label)
         message_layout.addWidget(message_label)
         
@@ -2422,35 +2472,50 @@ Details: {self.param_details_text.toPlainText()}"""
         self.clear_forum_posts()
         
         message_widget = QFrame()
-        message_widget.setFrameShape(QFrame.StyledPanel)
-        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setFrameShape(QFrame.NoFrame)
         message_widget.setStyleSheet("""
             QFrame {
-                background-color: #18181B;
-                border: 1px solid #FFFFFF;
-                border-radius: 8px;
+                background-color: #1A1E2E;
+                border-radius: 6px;
             }
         """)
         
         message_layout = QVBoxLayout(message_widget)
-        message_layout.setContentsMargins(20, 20, 20, 20)
+        message_layout.setContentsMargins(25, 30, 25, 30)
+        
+        # Add icon
+        icon_label = QLabel()
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setFixedSize(48, 48)
+        icon_label.setStyleSheet("""
+            background-color: #232840;
+            border-radius: 24px;
+            margin-bottom: 15px;
+            color: #4D7AAA;
+            font-size: 20px;
+            font-weight: bold;
+        """)
+        icon_label.setText("💬")
         
         title_label = QLabel("No discussions yet")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
-            color: #8C8C95;
+            color: #FFFFFF;
             font-size: 16px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         """)
         
         message_label = QLabel("Start the conversation by adding your parameter information")
         message_label.setAlignment(Qt.AlignCenter)
+        message_label.setWordWrap(True)
         message_label.setStyleSheet("""
-            color: #65656B;
-            font-size: 14px;
+            color: #8D96B5;
+            font-size: 13px;
+            line-height: 1.4;
         """)
         
+        message_layout.addWidget(icon_label, 0, Qt.AlignCenter)
         message_layout.addWidget(title_label)
         message_layout.addWidget(message_label)
         
@@ -2461,18 +2526,30 @@ Details: {self.param_details_text.toPlainText()}"""
         self.clear_forum_posts()
         
         message_widget = QFrame()
-        message_widget.setFrameShape(QFrame.StyledPanel)
-        message_widget.setFrameShadow(QFrame.Plain)
+        message_widget.setFrameShape(QFrame.NoFrame)
         message_widget.setStyleSheet("""
             QFrame {
-                background-color: #18181B;
-                border: 1px solid #FFFFFF;
-                border-radius: 8px;
+                background-color: #1A1E2E;
+                border-radius: 6px;
             }
         """)
         
         message_layout = QVBoxLayout(message_widget)
-        message_layout.setContentsMargins(20, 20, 20, 20)
+        message_layout.setContentsMargins(25, 30, 25, 30)
+        
+        # Add icon
+        icon_label = QLabel()
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setFixedSize(48, 48)
+        icon_label.setStyleSheet("""
+            background-color: #3A1A1A;
+            border-radius: 24px;
+            margin-bottom: 15px;
+            color: #F44336;
+            font-size: 20px;
+            font-weight: bold;
+        """)
+        icon_label.setText("⚠️")
         
         title_label = QLabel("Could not load discussions")
         title_label.setAlignment(Qt.AlignCenter)
@@ -2480,16 +2557,19 @@ Details: {self.param_details_text.toPlainText()}"""
             color: #F44336;
             font-size: 16px;
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         """)
         
         message_label = QLabel(error_message)
         message_label.setAlignment(Qt.AlignCenter)
+        message_label.setWordWrap(True)
         message_label.setStyleSheet("""
-            color: #8C8C95;
-            font-size: 14px;
+            color: #8D96B5;
+            font-size: 13px;
+            line-height: 1.4;
         """)
         
+        message_layout.addWidget(icon_label, 0, Qt.AlignCenter)
         message_layout.addWidget(title_label)
         message_layout.addWidget(message_label)
         
