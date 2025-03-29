@@ -2484,6 +2484,70 @@ Details: {self.param_details_text.toPlainText()}"""
                     </body>
                     </html>
                     """
+                    
+                    # Update forum messages
+                    self.forum_messages.setHtml(html_content)
+                    # Scroll to the top for forum style
+                    self.forum_messages.verticalScrollBar().setValue(0)
+                    self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
+                else:
+                    self.forum_messages.setHtml("""
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+                            
+                            body {
+                                background-color: #121212;
+                                margin: 0;
+                                padding: 15px;
+                                font-family: 'Roboto', sans-serif;
+                                font-size: 14px;
+                                color: #DDDDDD;
+                                line-height: 1.5;
+                            }
+                            
+                            .forum-header {
+                                background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+                                color: #00C6FF;
+                                padding: 15px 20px;
+                                font-weight: 500;
+                                font-size: 16px;
+                                margin-bottom: 25px;
+                                letter-spacing: 0.5px;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                                border-radius: 8px;
+                                border-left: 4px solid #00C6FF;
+                            }
+                            
+                            .empty-message {
+                                padding: 50px 20px;
+                                text-align: center;
+                                color: #999999;
+                                font-size: 15px;
+                                background-color: #1A1A1A;
+                                border-radius: 10px;
+                                margin-top: 10px;
+                                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                                border: 1px solid #333333;
+                            }
+                            
+                            .empty-icon {
+                                font-size: 40px;
+                                margin-bottom: 15px;
+                                color: #555555;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="forum-header">Parameter Forum - Discussion</div>
+                        <div class="empty-message">
+                            <div class="empty-icon">💬</div>
+                            <div>No forum posts yet. Save a parameter to start the conversation.</div>
+                        </div>
+                    </body>
+                    </html>
+                    """)
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
