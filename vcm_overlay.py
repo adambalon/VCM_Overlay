@@ -2180,7 +2180,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             max-width: 75%;
                             margin: 10px 0;
                             padding: 12px 16px;
-                            border-radius: 25px;
+                            border-radius: 30px;
                             font-size: 10pt;
                             line-height: 1.5;
                             word-wrap: break-word;
@@ -2195,38 +2195,38 @@ Details: {self.param_details_text.toPlainText()}"""
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
-                            border-bottom-right-radius: 6px;
+                            border-bottom-right-radius: 4px;
                             margin-left: auto;
-                            margin-right: 14px;
+                            margin-right: 18px;
                         }
                         .sent::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            right: -10px;
-                            width: 20px;
-                            height: 20px;
+                            right: -12px;
+                            width: 25px;
+                            height: 25px;
                             background-color: #0B93F6;
-                            border-bottom-left-radius: 20px;
+                            border-bottom-left-radius: 25px;
                             z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
-                            border-bottom-left-radius: 6px;
+                            border-bottom-left-radius: 4px;
                             margin-right: auto;
-                            margin-left: 14px;
+                            margin-left: 18px;
                         }
                         .received::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            left: -10px;
-                            width: 20px;
-                            height: 20px;
+                            left: -12px;
+                            width: 25px;
+                            height: 25px;
                             background-color: #E5E5EA;
-                            border-bottom-right-radius: 20px;
+                            border-bottom-right-radius: 25px;
                             z-index: -1;
                         }
                         .message-info {
@@ -2349,7 +2349,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             max-width: 75%;
                             margin: 10px 0;
                             padding: 12px 16px;
-                            border-radius: 25px;
+                            border-radius: 30px;
                             font-size: 10pt;
                             line-height: 1.5;
                             word-wrap: break-word;
@@ -2364,38 +2364,38 @@ Details: {self.param_details_text.toPlainText()}"""
                             align-self: flex-end;
                             background-color: #0B93F6;
                             color: white;
-                            border-bottom-right-radius: 6px;
+                            border-bottom-right-radius: 4px;
                             margin-left: auto;
-                            margin-right: 14px;
+                            margin-right: 18px;
                         }
                         .sent::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            right: -10px;
-                            width: 20px;
-                            height: 20px;
+                            right: -12px;
+                            width: 25px;
+                            height: 25px;
                             background-color: #0B93F6;
-                            border-bottom-left-radius: 20px;
+                            border-bottom-left-radius: 25px;
                             z-index: -1;
                         }
                         .received {
                             align-self: flex-start;
                             background-color: #E5E5EA;
                             color: black;
-                            border-bottom-left-radius: 6px;
+                            border-bottom-left-radius: 4px;
                             margin-right: auto;
-                            margin-left: 14px;
+                            margin-left: 18px;
                         }
                         .received::after {
                             content: "";
                             position: absolute;
                             bottom: 0;
-                            left: -10px;
-                            width: 20px;
-                            height: 20px;
+                            left: -12px;
+                            width: 25px;
+                            height: 25px;
                             background-color: #E5E5EA;
-                            border-bottom-right-radius: 20px;
+                            border-bottom-right-radius: 25px;
                             z-index: -1;
                         }
                         .message-info {
