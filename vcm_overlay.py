@@ -1205,6 +1205,13 @@ class VCMOverlay(QMainWindow):
         success, message = firebase_service.save_parameter_to_firebase(param_id, param_data)
         
         if success:
+            # Special case for no changes detected
+            if message == "NO_CHANGES":
+                self.git_status_label.setText("⚠ No changes were detected")
+                self.git_status_label.setStyleSheet("color: #FFAA55; font-size: 8pt; font-weight: bold;")
+                self.log_debug(f"No changes detected for parameter {param_id}")
+                return
+                
             # Check if we're admin by trying to find out if it went to parameters or pending
             is_admin = False
             try:

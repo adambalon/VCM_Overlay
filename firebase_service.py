@@ -280,6 +280,13 @@ def save_parameter_to_firebase(param_id, param_data):
         return False, "You must be signed in to save to Firebase"
     
     try:
+        # Check if there are actual changes to the parameter
+        has_changes, existing_data = check_parameter_changes(param_id, param_data)
+        
+        if not has_changes:
+            # Special case: No actual changes detected
+            return True, "NO_CHANGES"
+        
         # Add user info and timestamp to the data
         enriched_data = param_data.copy()
         enriched_data['updated_by'] = current_user.get('email', 'Unknown')
@@ -330,6 +337,12 @@ def save_parameter_to_firebase(param_id, param_data):
                 enriched_data['submitted_by'] = current_user.get('email', 'Unknown')
                 enriched_data['submitted_at'] = firestore.SERVER_TIMESTAMP
                 enriched_data['status'] = 'pending'
+                
+                # Also store old values if we have existing data
+                if existing_data:
+                    for field in ['name', 'description', 'details']:
+                        if field in existing_data:
+                            enriched_data[f'old_{field}'] = existing_data[field]
                 
                 # Check if already in pending
                 pending_ref = firestore_db.collection('pending').where('param_id', '==', param_id).limit(1).get()
@@ -384,6 +397,12 @@ def save_parameter_to_firebase(param_id, param_data):
                 enriched_data['submitted_by'] = current_user.get('email', 'Unknown')
                 enriched_data['submitted_at'] = {".sv": "timestamp"}
                 enriched_data['status'] = 'pending'
+                
+                # Also store old values if we have existing data
+                if existing_data:
+                    for field in ['name', 'description', 'details']:
+                        if field in existing_data:
+                            enriched_data[f'old_{field}'] = existing_data[field]
                 
                 db.child('pending').child(param_id).set(enriched_data, token=current_user['token'])
                 return True, f"Parameter {param_id} saved to pending"
@@ -725,6 +744,63 @@ def extract_values_from_details(details):
             pass
     
     return old_value, new_value
+
+def check_parameter_changes(param_id, param_data):
+    """Check if the submitted parameter data differs from existing data in the parameters collection.
+    
+    Args:
+        param_id (str): Parameter ID
+        param_data (dict): Parameter data to compare
+        
+    Returns:
+        tuple: (has_changes, existing_data)
+            has_changes (bool): True if there are differences, False if data is the same
+            existing_data (dict): Existing parameter data if found, None otherwise
+    """
+    if not firebase or not current_user:
+        return True, None  # Assume changes if we can't verify
+    
+    try:
+        existing_data = None
+        
+        # Check existing parameter
+        if firestore_db:
+            # Search in parameters collection (approved parameters)
+            param_ref = firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
+            
+            if param_ref and len(param_ref) > 0:
+                existing_data = param_ref[0].to_dict()
+        else:
+            # Using Realtime Database
+            db = firebase.database()
+            # Try to get the parameter
+            param_data_ref = db.child('parameters').child(param_id).get(token=current_user['token'])
+            if param_data_ref.val():
+                existing_data = param_data_ref.val()
+        
+        # If no existing data, then this is a new parameter (has changes)
+        if not existing_data:
+            return True, None
+        
+        # Check for differences in important fields
+        important_fields = ['name', 'description', 'details']
+        
+        for field in important_fields:
+            # If the field exists in both and values are different
+            if field in param_data and field in existing_data:
+                # Compare stripped values to ignore whitespace differences
+                new_value = str(param_data[field]).strip() if param_data[field] else ""
+                existing_value = str(existing_data[field]).strip() if existing_data[field] else ""
+                
+                if new_value != existing_value:
+                    return True, existing_data
+        
+        # If we reach here, no significant changes were found
+        return False, existing_data
+        
+    except Exception as e:
+        print(f"Error checking parameter changes: {str(e)}")
+        return True, None  # If error, assume there are changes to be safe
 
 # Initialize Firebase when module is imported
 initialize() 
