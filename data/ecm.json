@@ -252,6 +252,24 @@
       "description": "",
       "details": "",
       "added_time": "2025-03-29T04:58:26.015034"
+    },
+    "12666": {
+      "name": "Lightoff Spark Mult vs. Startup ECT",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T05:11:18.639453"
+    },
+    "12679": {
+      "name": "Lightoff Spark Idle P/N",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T05:11:18.755628"
+    },
+    "12684": {
+      "name": "VCP Spark",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T05:11:44.453632"
     }
   }
 }

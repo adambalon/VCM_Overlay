@@ -36,9 +36,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 
                             QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem)
 
-from PyQt5.QtCore import QTimer, Qt, QEvent, QRect
+from PyQt5.QtCore import QTimer, Qt, QEvent, QRect, QSize
 
-from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QBrush, QTextCursor
+from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QBrush, QTextCursor, QIcon
 
 import datetime
 
@@ -816,37 +816,13 @@ class VCMOverlay(QMainWindow):
         """)
         git_button_layout = QHBoxLayout(git_button_group)
         
-        # Save Details button
-        self.git_save_button = QPushButton("SAVE DETAILS")
-        self.git_save_button.clicked.connect(self.save_parameter_details)
-        self.git_save_button.setToolTip("Save parameter details to local JSON file")
-        self.git_save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #222222;
-                color: #FFFFFF;
-                border: none;
-                padding: 8px 15px;
-                border-radius: 6px;
-                font-size: 8pt;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #333333;
-                color: #FFFFFF;
-            }
-            QPushButton:pressed {
-                background-color: #111111;
-            }
-        """)
-        git_button_layout.addWidget(self.git_save_button)
-        
-        # Save to Firebase button (previously Check Status)
-        self.save_to_cloud_button = QPushButton("SAVE TO CLOUD")
+        # Save to Firebase button - rename to just "SAVE PARAMETER"
+        self.save_to_cloud_button = QPushButton("SAVE PARAMETER")
         self.save_to_cloud_button.clicked.connect(self.save_to_firebase)
-        self.save_to_cloud_button.setToolTip("Save parameter details to Firebase cloud database")
+        self.save_to_cloud_button.setToolTip("Save parameter details to Firestore database")
         self.save_to_cloud_button.setStyleSheet("""
             QPushButton {
-                background-color: #339933;  /* Green color for save */
+                background-color: #336699;  /* Blue color for save */
                 color: #FFFFFF;
                 border: none;
                 padding: 8px 15px;
@@ -855,19 +831,19 @@ class VCMOverlay(QMainWindow):
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #44BB44;
+                background-color: #4477AA;
                 color: #FFFFFF;
             }
             QPushButton:pressed {
-                background-color: #227722;
+                background-color: #225588;
             }
             QPushButton:disabled {
-                background-color: #555555;
-                color: #999999;
+                background-color: #223344;
+                color: #666666;
             }
         """)
-        # Disable the button if Firebase is not available
-        self.save_to_cloud_button.setEnabled(FIREBASE_AVAILABLE)
+        # Disable the button if not logged in or Firebase not available
+        self.save_to_cloud_button.setEnabled(False)
         git_button_layout.addWidget(self.save_to_cloud_button)
         
         # Add the button group to the layout
@@ -992,6 +968,25 @@ class VCMOverlay(QMainWindow):
             self.auth_button.setText("Logout")
             self.save_to_cloud_button.setEnabled(True)
             
+            # Enable parameter fields
+            self.param_details_text.setReadOnly(False)
+            self.param_details_text.setStyleSheet("""
+                QTextEdit {
+                    background-color: #181818;
+                    color: #CCCCCC;
+                    border: 1px solid #222222;
+                    border-radius: 6px;
+                    font-family: Consolas, monospace;
+                    font-size: 9.5pt;
+                    padding: 5px;
+                }
+            """)
+            self.parameter_header_label.setStyleSheet("""
+                font-size: 10pt; 
+                font-weight: bold; 
+                color: #FFFFFF;
+            """)
+            
             # Check if the user is an admin
             is_admin = False
             try:
@@ -1047,6 +1042,32 @@ class VCMOverlay(QMainWindow):
             self.user_label.setText("Not signed in")
             self.auth_button.setText("Login")
             self.save_to_cloud_button.setEnabled(False)
+            
+            # Disable parameter fields
+            self.param_details_text.setReadOnly(True)
+            self.param_details_text.setStyleSheet("""
+                QTextEdit {
+                    background-color: #181818;
+                    color: #555555; /* Dimmed text color */
+                    border: 1px solid #222222;
+                    border-radius: 6px;
+                    font-family: Consolas, monospace;
+                    font-size: 9.5pt;
+                    padding: 5px;
+                }
+            """)
+            self.parameter_header_label.setStyleSheet("""
+                font-size: 10pt; 
+                font-weight: bold; 
+                color: #555555; /* Dimmed text color */
+            """)
+            
+            # Clear parameter fields
+            self.param_id_label.setText("")
+            self.param_name_label.setText("")
+            self.param_desc_label.setText("")
+            self.param_details_text.clear()
+            self.parameter_header_label.setText("LOGIN REQUIRED")
             
             # Hide admin button if it exists
             if hasattr(self, 'admin_button') and self.admin_button:
@@ -1237,6 +1258,13 @@ class VCMOverlay(QMainWindow):
             return  # Don't update if no change
         
         self.last_parameter_text = text
+        
+        # If not logged in, don't process parameters
+        if not firebase_service.get_current_user():
+            self.status_label.setText("LOGIN REQUIRED")
+            self.parameter_header_label.setText("LOGIN REQUIRED")
+            return
+        
         self.status_label.setText("PARAMETER DETECTED")
         
         # Display the raw parameter text header (either ECM or TCM)
@@ -1247,10 +1275,9 @@ class VCMOverlay(QMainWindow):
         self.param_type_label.setText("")
         self.param_id_label.setText("")
         self.param_name_label.setText("")
-        # self.param_value_label.setText("")  # Keep this to avoid breaking code but field is hidden
         self.param_desc_label.setText("")
         self.param_details_text.clear()  # Clear the details text box
-        self.git_status_label.setText("")  # Clear git status message
+        self.git_status_label.setText("")  # Clear status message
         
         # Extract specific parts
         try:
@@ -1261,7 +1288,7 @@ class VCMOverlay(QMainWindow):
             # Parse format: [ECM] 12600 - Main Spark vs. Airmass vs. RPM Open Throttle, High Octane: This is the High Octane spark...
             parts = text.split(None, 2)  # Split at most twice to get: ['[ECM]', '12600', '- Main Spark vs...']
             
-            # Get ECM type for the JSON file
+            # Get ECM type for the database query
             ecm_type = get_ecm_type_from_text(text)
             
             # Extract ID (number after type)
@@ -1306,195 +1333,115 @@ class VCMOverlay(QMainWindow):
                     param_name = name_part.strip()
                     self.param_name_label.setText(param_name)
             
-            # Track data sources for highlighting
-            data_from_local = False
-            data_from_cloud = False
-            
-            # Check if this parameter already exists in the local JSON file
-            # and try to get details from the JSON file
-            if ecm_type and param_id:
-                # Get the parameter data from the JSON file without Git operations
-                param_data, stored_details = get_parameter_details_from_json(param_id, ecm_type)
-                
-                if param_data:
-                    # Update the UI with the stored parameter data
-                    stored_name = param_data.get("name", "")
-                    stored_desc = param_data.get("description", "")
-                    
-                    # Use stored values if they exist and are more detailed
-                    if stored_name and (not param_name or len(stored_name) > len(param_name)):
-                        param_name = stored_name
-                        self.param_name_label.setText(stored_name)
-                    
-                    if stored_desc and (not param_desc or len(stored_desc) > len(param_desc)):
-                        param_desc = stored_desc
-                        self.param_desc_label.setText(stored_desc)
-                    
-                    # If we have stored details, use those (but NEVER generate new ones)
-                    if stored_details:
-                        self.param_details_text.setText(stored_details)
-                        self.log_debug(f"Loaded parameter details from JSON for {param_id}")
-                        data_from_local = True
-                
-                # Now check if parameter exists in Firebase
-                if FIREBASE_AVAILABLE and firebase_service.get_current_user():
-                    self.log_debug(f"Checking Firebase for parameter {param_id}...")
-                    try:
-                        if firebase_service.firestore_db:
-                            # Try to fetch from parameters collection first
-                            param_ref = firebase_service.firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
-                            
-                            if param_ref and len(param_ref) > 0:
-                                cloud_param = param_ref[0].to_dict()
-                                
-                                # Get cloud data
-                                cloud_name = cloud_param.get("name", "")
-                                cloud_desc = cloud_param.get("description", "")
-                                cloud_details = cloud_param.get("details", "")
-                                
-                                # Use cloud values if more detailed
-                                if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
-                                    param_name = cloud_name
-                                    self.param_name_label.setText(cloud_name)
-                                
-                                if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
-                                    param_desc = cloud_desc
-                                    self.param_desc_label.setText(cloud_desc)
-                                
-                                if cloud_details:
-                                    self.param_details_text.setText(cloud_details)
-                                    self.log_debug(f"Loaded parameter details from Firestore for {param_id}")
-                                    data_from_cloud = True
-                                    data_from_local = False  # Prioritize cloud data
-                            
-                            # Check pending collection as well
-                            pending_ref = firebase_service.firestore_db.collection('pending').where('param_id', '==', param_id).limit(1).get()
-                            
-                            if pending_ref and len(pending_ref) > 0:
-                                pending_param = pending_ref[0].to_dict()
-                                
-                                # Get pending data
-                                pending_name = pending_param.get("name", "")
-                                pending_desc = pending_param.get("description", "")
-                                pending_details = pending_param.get("details", "")
-                                
-                                # Use pending values if more detailed
-                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                    param_name = pending_name
-                                    self.param_name_label.setText(pending_name)
-                                
-                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                    param_desc = pending_desc
-                                    self.param_desc_label.setText(pending_desc)
-                                
-                                if pending_details:
-                                    self.param_details_text.setText(pending_details)
-                                    self.log_debug(f"Loaded parameter details from Firestore pending for {param_id}")
-                                    data_from_cloud = True
-                                    data_from_local = False  # Prioritize cloud data
+            # Check Firebase for parameter details
+            if param_id and FIREBASE_AVAILABLE and firebase_service.get_current_user():
+                self.log_debug(f"Checking Firebase for parameter {param_id}...")
+                try:
+                    if firebase_service.firestore_db:
+                        # Try to fetch from parameters collection first
+                        param_ref = firebase_service.firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
                         
-                        elif firebase_service.firebase:
-                            # Try Realtime Database
-                            current_user = firebase_service.get_current_user()
-                            db = firebase_service.firebase.database()
+                        if param_ref and len(param_ref) > 0:
+                            cloud_param = param_ref[0].to_dict()
                             
-                            # Check parameters collection
-                            param_data = db.child('parameters').child(param_id).get(token=current_user['token']).val()
+                            # Get cloud data
+                            cloud_name = cloud_param.get("name", "")
+                            cloud_desc = cloud_param.get("description", "")
+                            cloud_details = cloud_param.get("details", "")
                             
-                            if param_data:
-                                # Get cloud data
-                                cloud_name = param_data.get("name", "")
-                                cloud_desc = param_data.get("description", "")
-                                cloud_details = param_data.get("details", "")
-                                
-                                # Use cloud values if more detailed
-                                if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
-                                    param_name = cloud_name
-                                    self.param_name_label.setText(cloud_name)
-                                
-                                if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
-                                    param_desc = cloud_desc
-                                    self.param_desc_label.setText(cloud_desc)
-                                
-                                if cloud_details:
-                                    self.param_details_text.setText(cloud_details)
-                                    self.log_debug(f"Loaded parameter details from Realtime Database for {param_id}")
-                                    data_from_cloud = True
-                                    data_from_local = False  # Prioritize cloud data
+                            # Use cloud values if more detailed
+                            if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
+                                param_name = cloud_name
+                                self.param_name_label.setText(cloud_name)
                             
-                            # Check pending collection
-                            pending_data = db.child('pending').child(param_id).get(token=current_user['token']).val()
+                            if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
+                                param_desc = cloud_desc
+                                self.param_desc_label.setText(cloud_desc)
                             
-                            if pending_data:
-                                # Get pending data
-                                pending_name = pending_data.get("name", "")
-                                pending_desc = pending_data.get("description", "")
-                                pending_details = pending_data.get("details", "")
-                                
-                                # Use pending values if more detailed
-                                if pending_name and (not param_name or len(pending_name) > len(param_name)):
-                                    param_name = pending_name
-                                    self.param_name_label.setText(pending_name)
-                                
-                                if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
-                                    param_desc = pending_desc
-                                    self.param_desc_label.setText(pending_desc)
-                                
-                                if pending_details:
-                                    self.param_details_text.setText(pending_details)
-                                    self.log_debug(f"Loaded parameter details from Realtime Database pending for {param_id}")
-                                    data_from_cloud = True
-                                    data_from_local = False  # Prioritize cloud data
+                            if cloud_details:
+                                self.param_details_text.setText(cloud_details)
+                                self.log_debug(f"Loaded parameter details from Firestore for {param_id}")
+                                self.git_status_label.setText("📡 Parameter data from Firestore")
+                        
+                        # Check pending collection as well
+                        pending_ref = firebase_service.firestore_db.collection('pending').where('param_id', '==', param_id).limit(1).get()
+                        
+                        if pending_ref and len(pending_ref) > 0:
+                            pending_param = pending_ref[0].to_dict()
+                            
+                            # Get pending data
+                            pending_name = pending_param.get("name", "")
+                            pending_desc = pending_param.get("description", "")
+                            pending_details = pending_param.get("details", "")
+                            
+                            # Use pending values if more detailed
+                            if pending_name and (not param_name or len(pending_name) > len(param_name)):
+                                param_name = pending_name
+                                self.param_name_label.setText(pending_name)
+                            
+                            if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
+                                param_desc = pending_desc
+                                self.param_desc_label.setText(pending_desc)
+                            
+                            if pending_details:
+                                self.param_details_text.setText(pending_details)
+                                self.log_debug(f"Loaded parameter details from Firestore pending for {param_id}")
+                                self.git_status_label.setText("📡 Parameter data from pending collection")
                     
-                    except Exception as e:
-                        self.log_debug(f"Error checking Firebase for parameter {param_id}: {str(e)}")
+                    elif firebase_service.firebase:
+                        # Try Realtime Database
+                        current_user = firebase_service.get_current_user()
+                        db = firebase_service.firebase.database()
+                        
+                        # Check parameters collection
+                        param_data = db.child('parameters').child(param_id).get(token=current_user['token']).val()
+                        
+                        if param_data:
+                            # Get cloud data
+                            cloud_name = param_data.get("name", "")
+                            cloud_desc = param_data.get("description", "")
+                            cloud_details = param_data.get("details", "")
+                            
+                            # Use cloud values if more detailed
+                            if cloud_name and (not param_name or len(cloud_name) > len(param_name)):
+                                param_name = cloud_name
+                                self.param_name_label.setText(cloud_name)
+                            
+                            if cloud_desc and (not param_desc or len(cloud_desc) > len(param_desc)):
+                                param_desc = cloud_desc
+                                self.param_desc_label.setText(cloud_desc)
+                            
+                            if cloud_details:
+                                self.param_details_text.setText(cloud_details)
+                                self.log_debug(f"Loaded parameter details from Realtime Database for {param_id}")
+                                self.git_status_label.setText("📡 Parameter data from database")
+                        
+                        # Check pending collection
+                        pending_data = db.child('pending').child(param_id).get(token=current_user['token']).val()
+                        
+                        if pending_data:
+                            # Get pending data
+                            pending_name = pending_data.get("name", "")
+                            pending_desc = pending_data.get("description", "")
+                            pending_details = pending_data.get("details", "")
+                            
+                            # Use pending values if more detailed
+                            if pending_name and (not param_name or len(pending_name) > len(param_name)):
+                                param_name = pending_name
+                                self.param_name_label.setText(pending_name)
+                            
+                            if pending_desc and (not param_desc or len(pending_desc) > len(param_desc)):
+                                param_desc = pending_desc
+                                self.param_desc_label.setText(pending_desc)
+                            
+                            if pending_details:
+                                self.param_details_text.setText(pending_details)
+                                self.log_debug(f"Loaded parameter details from Realtime Database pending for {param_id}")
+                                self.git_status_label.setText("📡 Parameter data from pending collection")
                 
-                # Set highlighting based on data source
-                if data_from_cloud:
-                    # Highlight in green for cloud data
-                    self.param_details_text.setStyleSheet("""
-                        QTextEdit {
-                            background-color: #181818;
-                            color: #55FF55; /* Green for cloud data */
-                            border: 1px solid #222222;
-                            border-radius: 6px;
-                            font-family: Consolas, monospace;
-                            font-size: 9.5pt;
-                            padding: 5px;
-                        }
-                    """)
-                    self.git_status_label.setText("📡 Parameter data from cloud")
-                elif data_from_local:
-                    # Highlight in red for local data
-                    self.param_details_text.setStyleSheet("""
-                        QTextEdit {
-                            background-color: #181818;
-                            color: #FF5555; /* Red for local data */
-                            border: 1px solid #222222;
-                            border-radius: 6px;
-                            font-family: Consolas, monospace;
-                            font-size: 9.5pt;
-                            padding: 5px;
-                        }
-                    """)
-                    self.git_status_label.setText("💾 Parameter data from local JSON")
-                else:
-                    # Default styling
-                    self.param_details_text.setStyleSheet("""
-                        QTextEdit {
-                            background-color: #181818;
-                            color: #CCCCCC; /* Default text color */
-                            border: 1px solid #222222;
-                            border-radius: 6px;
-                            font-family: Consolas, monospace;
-                            font-size: 9.5pt;
-                            padding: 5px;
-                        }
-                    """)
-                
-                # Try to automatically add the parameter if it's not in the JSON file and we have a name
-                if param_name:
-                    self.try_add_parameter_to_json(param_id, param_name, ecm_type)
+                except Exception as e:
+                    self.log_debug(f"Error checking Firebase for parameter {param_id}: {str(e)}")
+                    self.git_status_label.setText(f"⚠ Error checking Firestore: {str(e)}")
 
             # Update the param info text in the debug window
             if hasattr(self, 'param_info_text') and self.param_info_text:
@@ -1510,631 +1457,312 @@ Details: {self.param_details_text.toPlainText()}"""
             self.status_label.setText("ERROR PARSING PARAMETER")
     
     def try_add_parameter_to_json(self, param_id, param_name, ecm_type):
-        """Try to add the parameter to the appropriate JSON file"""
-        if not param_id:
-            return
-        
-        # Add parameter to the JSON file
-        if add_parameter_to_json(param_id, param_name, ecm_type):
-            print(f"Added parameter {param_id} to {ecm_type.lower()}")
-        else:
-            print(f"Parameter not added: Parameter {param_id} already exists in {ecm_type.lower()}")
-    
+        """This method is now just a stub - we no longer use JSON files"""
+        # This method is kept as a stub to avoid breaking any existing code references
+        # We're now using Firestore exclusively
+        pass
 
     def save_parameter_details(self):
-
-        """Save the current parameter details to the local JSON file"""
-
-        param_id = self.param_id_label.text().strip()
-
-        current_details = self.param_details_text.toPlainText().strip()
-
-        
-
-        if not param_id:
-
-            self.git_status_label.setText("⚠ No parameter selected")
-
+        """This method is now just a stub - we now use Firestore exclusively"""
+        # This method is kept as a stub to avoid breaking any existing code references
+        # Instead of saving to JSON, we now direct users to save to Firestore
+        if not FIREBASE_AVAILABLE:
+            QMessageBox.information(self, "Firebase Required", 
+                "Firebase is required for saving parameters. Please check your configuration.")
             return
-
         
-
-        ecm_type = get_ecm_type_from_text(self.last_parameter_text)
-
-        
-
-        # Update the parameter
-
-        success, message = update_parameter_details(param_id, current_details, ecm_type)
-
-        
-
-        if success:
-
-            self.git_status_label.setText(f"✅ Parameter details saved locally")
-
-            # Add to git staging area
-
-            try:
-
-                git_add_and_commit(f"data/{ecm_type.lower()}.json", f"Updated parameter {param_id}")
-
-                self.log_debug(f"Updated parameter {param_id} and committed to Git")
-
-            except Exception as e:
-
-                self.log_debug(f"Updated parameter {param_id} but Git commit failed: {str(e)}")
-
+        if not firebase_service.get_current_user():
+            QMessageBox.information(self, "Login Required", 
+                "You must be logged in to save parameter details.")
+            # Prompt to sign in
+            self.handle_auth_button()
         else:
-
-            self.git_status_label.setText(f"⚠ Error saving: {message}")
-
-
+            # Just call save_to_firebase directly
+            self.save_to_firebase()
 
     def check_parameter_status(self):
-
         """Check the status of the current parameter"""
-
         param_id = self.param_id_label.text().strip()
 
         if not param_id:
-
             self.git_status_label.setText("⚠ No parameter selected")
-
             return
-
             
-
         current_details = self.param_details_text.toPlainText()
-
         
-
         # First check if there's any status indicator in the text
-
         if " - Approved" in current_details:
-
             # Set approved style
-
             self.mark_as_approved(param_id, get_ecm_type_from_text(self.last_parameter_text))
-
             self.git_status_label.setText("✅ This parameter has been approved")
-
             return
-
             
-
         if " - Rejected" in current_details:
-
             # Set rejected style
-
             self.param_details_text.setStyleSheet("""
-
                 QTextEdit {
-
                     background-color: #111111;
-
                     color: #FF5555; /* Red color for rejected */
-
                     border: 1px solid #222222;
-
                     border-radius: 6px;
-
                     font-family: Consolas, monospace;
-
                 }
-
             """)
-
             self.git_status_label.setText("❌ This parameter has been rejected")
-
             return
-
             
-
         # No status indicator
-
         self.git_status_label.setText("📝 Parameter details saved locally")
 
-
-
     def mark_as_approved(self, param_id, ecm_type):
-
         """Mark the current parameter as approved"""
-
         # Update the details text area styling
-
         self.param_details_text.setStyleSheet("""
-
             QTextEdit {
-
                 background-color: #111111;
-
                 color: #55FF55; /* Green color for approved */
-
                 border: 1px solid #222222;
-
                 border-radius: 6px;
-
                 font-family: Consolas, monospace;
-
             }
-
         """)
-
         self.log_debug(f"Parameter {param_id} marked as approved")
 
-
-
     def monitor_parameter_text(self):
-
         """Poll the parameter edit control for changes"""
-
         if not self.detection_enabled:
-
             return
-
             
-
         try:
-
             if not self.current_parameter_edit_hwnd or not user32.IsWindow(self.current_parameter_edit_hwnd):
-
                 self.current_parameter_edit_hwnd = None  # Mark as invalid
-
                 return
-
                 
-
             # Get the current text
-
             try:
-
                 text = get_edit_text(self.current_parameter_edit_hwnd)
-
             except Exception as e:
-
                 self.log_debug(f"Failed to get text from edit control: {str(e)}")
-
                 return
-
                 
-
             # Check if the text changed
-
             if text != self.last_parameter_text:
-
                 self.log_debug("Parameter text changed")
-
                 self.last_parameter_text = text
-
                 
-
                 # Only process valid parameter text
-
                 if self.is_parameter_text(text):
-
                     # Parse the parameter text
-
                     parsed_data = parse_parameter_text(text)
-
                     
-
                     if parsed_data:
-
                         # Use our new method to update the display and check for pending/approved status
-
                         self.update_parameter_display({
-
                             "text": text,
-
                             "param_id": parsed_data[0],
-
                             "param_name": parsed_data[1]
-
                         })
-
                         
-
                         # Try to add the parameter to the JSON file if it doesn't exist
-
                         try:
-
                             param_id = parsed_data[0]
-
                             param_name = parsed_data[1]
-
                             ecm_type = get_ecm_type_from_text(text)
-
                             
-
                             success, message = add_parameter_to_json(param_id, param_name, ecm_type)
-
                             if success:
-
                                 self.log_debug(f"Added parameter: {message}")
-
                             else:
-
                                 self.log_debug(message)  # Parameter already exists
-
                         except Exception as e:
-
                             self.log_debug(f"Error adding parameter to JSON: {str(e)}")
-
                     else:
-
                         self.log_debug("Could not parse parameter text")
-
                 else:
-
                     self.log_debug("Text doesn't appear to be parameter text")
-
                     
-
         except Exception as e:
-
             self.log_debug(f"Error in monitor_parameter_text: {str(e)}")
 
-
-
     def check_parameter_edit_control(self):
-
         """Check if the parameter edit control is valid and update the UI"""
-
         if self.current_parameter_edit_hwnd:
-
             try:
-
                 # Check if handle is valid
-
                 if not user32.IsWindow(self.current_parameter_edit_hwnd):
-
                     self.log_debug(f"Edit control {self.current_parameter_edit_hwnd} is not a valid window")
-
                     self.parameter_header_label.setText("No parameter detected - searching...")
-
                     self.auto_detect_parameter_edit_control()
-
                     return
-
                 
-
                 # Get text from edit control
-
                 text = get_edit_text(self.current_parameter_edit_hwnd)
-
                 if self.is_parameter_text(text):
-
                     # Parse and display parameter information
-
                     self.update_parameter_info(text)
-
                     self.update_title_handle_indicator(self.current_parameter_edit_hwnd, True)
-
                 else:
-
                     self.log_debug(f"Edit control {self.current_parameter_edit_hwnd} does not contain parameter text")
-
                     self.parameter_header_label.setText("Invalid parameter format - searching...")
-
                     self.auto_detect_parameter_edit_control()
-
             except Exception as e:
-
                 self.log_debug(f"Error in check_parameter_edit_control: {str(e)}")
-
                 self.parameter_header_label.setText("Error checking parameter - searching...")
-
                 self.auto_detect_parameter_edit_control()
-
         else:
-
             self.log_debug("No parameter edit control set - auto-detecting...")
-
             self.auto_detect_parameter_edit_control()
-
             
-
     def auto_detect_parameter_edit_control(self):
-
         """Auto-detect the parameter edit control by looking for text starting with [ECM] or [TCM]"""
-
         try:
-
             # Find VCM Editor window
-
             vcm_editor_hwnd = self.find_vcm_editor_window()
-
             if not vcm_editor_hwnd:
-
                 self.log_debug("Could not find VCM Editor window")
-
                 return
-
                 
-
             # Find edit controls in VCM Editor window
-
             edit_controls = self.find_edit_controls(vcm_editor_hwnd)
-
             
-
             # Check each edit control for parameter text
-
             for control in edit_controls:
-
                 try:
-
                     text = get_edit_text(control)
-
                     if self.is_parameter_text(text):
-
                         self.log_debug(f"Found parameter edit control: {control}")
-
                         self.update_handle_number(control)
-
                         self.update_handle_status()
-
                         return
-
                 except Exception as e:
-
                     self.log_debug(f"Error checking edit control {control}: {str(e)}")
-
                     continue
-
             
-
             self.log_debug("Could not find parameter edit control")
-
             self.parameter_header_label.setText("No parameter detected - please set manually")
-
         except Exception as e:
-
             self.log_debug(f"Error in auto_detect_parameter_edit_control: {str(e)}")
-
             
-
     def update_handle_number(self, handle_num):
-
         """Update the parameter edit control handle number"""
-
         old_handle = self.current_parameter_edit_hwnd
-
         self.current_parameter_edit_hwnd = handle_num
-
         
-
         if handle_num != old_handle:
-
             self.log_debug(f"Parameter detection activated - monitoring edit control {handle_num}")
-
         
-
         # Update handle info in debug window if it's open
-
         if hasattr(self, 'handle_number_label') and self.handle_number_label:
-
             self.handle_number_label.setText(f"Current handle: {handle_num}")
-
             
-
     def update_handle_status(self):
-
         """Update the handle status in the debug window"""
-
         if hasattr(self, 'handle_status_label') and self.handle_status_label:
-
             if self.current_parameter_edit_hwnd:
-
                 if user32.IsWindow(self.current_parameter_edit_hwnd):
-
                     self.handle_status_label.setText("Status: Valid")
-
                     self.handle_status_label.setStyleSheet("color: #00FF00; font-weight: bold;")
-
                 else:
-
                     self.handle_status_label.setText("Status: Invalid")
-
                     self.handle_status_label.setStyleSheet("color: #FF5555; font-weight: bold;")
-
             else:
-
                 self.handle_status_label.setText("Status: Not Set")
-
                 self.handle_status_label.setStyleSheet("color: #AAAAAA; font-weight: bold;")
-
                 
-
     def update_title_handle_indicator(self, handle, is_valid=False):
-
         """Update the window title to show current handle and status"""
-
         try:
-
             status = "✓" if is_valid else "✗"
-
             title = f"VCM Parameter ID Monitor - Handle: {handle} {status}"
-
             self.setWindowTitle(title)
-
         except Exception as e:
-
             self.log_debug(f"Error updating title: {str(e)}")
-
             
-
     def find_vcm_editor_window(self):
-
         """Find the VCM Editor window by title"""
-
         result = [None]
-
         
-
         @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
         def enum_windows_callback(hwnd, lParam):
-
             try:
-
                 window_text = get_window_text(hwnd)
-
                 if window_text and "VCM Editor" in window_text:
-
                     result[0] = hwnd
-
                     return False  # Stop enumeration
-
             except Exception as e:
-
                 self.log_debug(f"Error in enum_windows_callback: {str(e)}")
-
             return True
-
         
-
         try:
-
             user32.EnumWindows(enum_windows_callback, 0)
-
         except Exception as e:
-
             self.log_debug(f"Error in EnumWindows: {str(e)}")
-
             
-
         return result[0]
-
         
-
     def find_edit_controls(self, parent_hwnd, max_depth=5, current_depth=0):
-
         """Find all edit controls in a parent window with depth limit"""
-
         if current_depth > max_depth:
-
             return []
-
             
-
         edit_controls = []
-
         seen_handles = set()  # Track seen handles to avoid duplicates
-
         
-
         # Define callback function for EnumChildWindows
-
         @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
         def enum_child_proc(hwnd, lParam):
-
             try:
-
                 if hwnd in seen_handles:
-
                     return True  # Skip if already seen
-
                     
-
                 seen_handles.add(hwnd)
-
                 class_name = get_class_name(hwnd)
-
                 
-
                 # Check if it's an edit control
-
                 if "edit" in class_name.lower():
-
                     edit_controls.append(hwnd)
-
                     
-
                     # Try to get text to see if it's a parameter control (prioritize these)
-
                     try:
-
                         text = get_edit_text(hwnd)
-
                         if text and (text.startswith('[ECM]') or text.startswith('[TCM]')):
-
                             # Move this to the front as it's likely what we want
-
                             edit_controls.remove(hwnd)
-
                             edit_controls.insert(0, hwnd)
-
                     except:
-
                         pass
-
                 
-
                 # Recursively check child windows
-
                 child_controls = self.find_edit_controls(hwnd, max_depth, current_depth + 1)
-
                 edit_controls.extend(child_controls)
-
             except Exception as e:
-
                 self.log_debug(f"Error in enum_child_proc: {str(e)}")
-
                 
-
             return True
-
-            
-
+        
         try:
-
             # Enumerate child windows
-
             user32.EnumChildWindows(parent_hwnd, enum_child_proc, 0)
-
         except Exception as e:
-
             self.log_debug(f"Error in EnumChildWindows: {str(e)}")
-
             
-
         return edit_controls
 
-
-
     def parse_parameter_text(self, text):
-
         """Parse parameter text to extract parameter ID and name"""
-
         if not text:
-
             return None
-
             
-
         try:
-
             return parse_parameter_text(text)[:2]  # Return just id and name
-
         except Exception as e:
-
             self.log_debug(f"Error parsing parameter text: {str(e)}")
-
             return None
-
-
 
     def is_parameter_text(self, text):
-
         """Check if text contains parameter information (starts with [ECM] or [TCM])"""
-
         if text and isinstance(text, str):
-
             return text.startswith('[ECM]') or text.startswith('[TCM]')
-
         return False
 
 
@@ -2142,138 +1770,28 @@ Details: {self.param_details_text.toPlainText()}"""
 # JSON and Git Operations Functions
 
 def load_parameter_file(ecm_type):
-    """
-    Load parameter data from a JSON file
-    
-    Args:
-        ecm_type: The module type (ECM, TCM, etc.)
-        
-    Returns:
-        dict: The parameter data, or an empty dict if the file doesn't exist
-    """
-    # Use lowercase filename for compatibility
-    filename = f"data/{ecm_type.lower()}.json"
-    
-    try:
-        if os.path.exists(filename):
-            with open(filename, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            # Create an empty structure
-            return {"parameters": {}}
-    except Exception as e:
-        print(f"Error loading parameter file {filename}: {str(e)}")
-        return {"parameters": {}}
+    """This function is now a stub - we no longer use JSON files"""
+    # We're now using Firestore exclusively
+    return {}
 
 def save_parameter_file(ecm_type, data):
-    """
-    Save parameter data to a JSON file
-    
-    Args:
-        ecm_type: The module type (ECM, TCM, etc.)
-        data: The parameter data to save
-        
-    Returns:
-        bool: True if the save was successful, False otherwise
-    """
-    # Create data directory if it doesn't exist
-    os.makedirs("data", exist_ok=True)
-    
-    # Use lowercase filename for compatibility
-    filename = f"data/{ecm_type.lower()}.json"
-    
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
-        return True
-    except Exception as e:
-        print(f"Error saving parameter file {filename}: {str(e)}")
-        return False
-
-
-
-def add_parameter_to_json(param_id, param_name, ecm_type):
-    """
-    Add a parameter to the JSON file for the specified module type
-    
-    Args:
-        param_id: The parameter ID
-        param_name: The parameter name
-        ecm_type: The module type (ECM, TCM, etc.)
-        
-    Returns:
-        bool: True if the parameter was added, False otherwise
-    """
-    if not param_id:
-        return False
-    
-    # Load existing data
-    data = load_parameter_file(ecm_type)
-    
-    # Get the existing parameters or create an empty dict
-    if "parameters" not in data:
-        data["parameters"] = {}
-    
-    # Check if the parameter already exists
-    if param_id in data["parameters"]:
-        # Parameter already exists
-        print(f"Parameter {param_id} already exists in {ecm_type.lower()}")
-        return False
-    
-    # Add the parameter
-    data["parameters"][param_id] = {
-        "name": param_name,
-        "description": "",
-        "details": "",
-        "added_time": datetime.datetime.now().isoformat()
-    }
-    
-    # Save the updated data
-    if save_parameter_file(ecm_type, data):
-        print(f"Added parameter {param_id} to {ecm_type.lower()}")
-        return True
-    
+    """This function is now a stub - we no longer use JSON files"""
+    # We're now using Firestore exclusively
     return False
 
 
 
+def add_parameter_to_json(param_id, param_name, ecm_type):
+    """This function is now a stub - we no longer use JSON files"""
+    # We're now using Firestore exclusively
+    return False, "JSON files are no longer used - please use Firebase"
+
+
+
 def update_parameter_details(param_id, details, ecm_type):
-    """
-    Update the details for a parameter in the JSON file
-    
-    Args:
-        param_id: The parameter ID
-        details: The parameter details text
-        ecm_type: The module type (ECM, TCM, etc.)
-        
-    Returns:
-        tuple: (success, message) where success is a boolean and message is a string
-    """
-    if not param_id:
-        return False, "No parameter ID provided"
-    
-    # Load existing data
-    data = load_parameter_file(ecm_type)
-    
-    # Ensure we have a parameters section
-    if "parameters" not in data:
-        data["parameters"] = {}
-    
-    # Check if the parameter exists
-    if param_id not in data["parameters"]:
-        print(f"Parameter {param_id} not found in {ecm_type.lower()}")
-        return False, f"Parameter {param_id} not found in {ecm_type.lower()}"
-    
-    # Update the details
-    data["parameters"][param_id]["details"] = details
-    data["parameters"][param_id]["updated_time"] = datetime.datetime.now().isoformat()
-    
-    # Save the updated data
-    if save_parameter_file(ecm_type, data):
-        print(f"Updated details for parameter {param_id} in {ecm_type.lower()}")
-        return True, f"Updated details for parameter {param_id}"
-    
-    return False, "Failed to save parameter file"
+    """This function is now a stub - we no longer use JSON files"""
+    # We're now using Firestore exclusively
+    return False, "JSON files are no longer used - please use Firebase"
 
 
 
@@ -2496,33 +2014,9 @@ def format_json(obj, indent=2):
 
 
 def get_parameter_details_from_json(param_id, ecm_type):
-    """
-    Get parameter details from the JSON file
-    Returns tuple of (parameter_data, details_text)
-    """
-    if not param_id or not ecm_type:
-        return None, None
-    
-    try:
-        # Load the JSON file for the ECM type
-        data = load_parameter_file(ecm_type)
-        
-        # Check for parameter in parameters section first
-        if "parameters" in data and param_id in data["parameters"]:
-            param_data = data["parameters"][param_id]
-            return param_data, param_data.get("details", "")
-        
-        # Check if parameter exists at root level (file inconsistency)
-        elif param_id in data and param_id != "name" and param_id != "description" and param_id != "parameters":
-            param_data = data[param_id]
-            return param_data, param_data.get("details", "")
-            
-        # Parameter not found
-        return None, None
-    
-    except Exception as e:
-        print(f"Error getting parameter details: {str(e)}")
-        return None, None
+    """This function is now a stub - we no longer use JSON files"""
+    # We're now using Firestore exclusively
+    return None, None
 
 
 
