@@ -435,17 +435,26 @@ class VCMOverlay(QMainWindow):
         """Initialize the overlay window"""
         super(VCMOverlay, self).__init__(parent)
         
-        # Set up window flags
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        # Set fixed size for now
+        self.setMinimumWidth(700)
+        self.setMinimumHeight(500)
+        
+        # Load from settings later
+        self.move(100, 100)
+        
+        # Remove window frame but add property for custom resize
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowTitle("VCM Parameter Monitor")
         
-        # Dragging and resizing variables
+        # Initialize dragging & resizing
         self.dragging = False
         self.resizing = False
         self.drag_position = None
         self.old_size = None
-        self.resize_corner_size = 20  # Size of the "grab area" in the bottom right
+        
+        # Size of resize corner
+        self.resize_corner_size = 16
         
         # Set minimum size
         self.setMinimumSize(360, 400)
@@ -1191,13 +1200,20 @@ class VCMOverlay(QMainWindow):
             self.git_status_label.setText("⚠ No parameter selected")
             return
         
+        # Get current details to append submission as forum post
+        user_email = current_user.get('email', 'Anonymous')
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Format the new submission as a forum post
+        formatted_post = self.format_forum_post(user_email, timestamp, param_details)
+        
         # Prepare parameter data
         param_data = {
             "id": param_id,
             "type": param_type,
             "name": param_name,
             "description": param_desc,
-            "details": param_details,
+            "details": formatted_post,
             "timestamp": datetime.datetime.now().isoformat()
         }
         
@@ -1211,6 +1227,11 @@ class VCMOverlay(QMainWindow):
                 self.git_status_label.setStyleSheet("color: #FFAA55; font-size: 8pt; font-weight: bold;")
                 self.log_debug(f"No changes detected for parameter {param_id}")
                 return
+                
+            # Update the details text with the forum post format
+            self.param_details_text.setText(formatted_post)
+            # Apply the updated styling
+            self.update_param_details_style()
                 
             # Check if we're admin by trying to find out if it went to parameters or pending
             is_admin = False
@@ -1244,6 +1265,22 @@ class VCMOverlay(QMainWindow):
             # Show error message
             QMessageBox.warning(self, "Firebase Error", 
                 f"Failed to save parameter to Firebase:\n{message}")
+
+    def format_forum_post(self, user_email, timestamp, details):
+        """Format details as a forum post"""
+        # Check if there are existing posts
+        existing_details = details.strip()
+        
+        # Initialize with header for new post
+        header = f"\n{'='*50}\n[{timestamp}] Posted by: {user_email}\n{'-'*50}\n"
+        
+        # Add the new post to the existing content
+        if '=' in existing_details and '[' in existing_details and 'Posted by:' in existing_details:
+            # Already has forum posts, prepend the new one
+            return f"{header}{existing_details}"
+        else:
+            # First post - wrap the existing content
+            return f"{header}{existing_details}"
 
     def init_firebase(self):
         """Initialize Firebase services"""
@@ -1458,6 +1495,7 @@ class VCMOverlay(QMainWindow):
                             
                             if cloud_details:
                                 self.param_details_text.setText(cloud_details)
+                                self.update_param_details_style()
                                 self.log_debug(f"Loaded parameter details from Firestore for {param_id}")
                                 self.git_status_label.setText("📡 Parameter data from Firestore")
                         
@@ -1504,6 +1542,7 @@ class VCMOverlay(QMainWindow):
                                         cleaned_details = pending_details[:-16]  # Remove the suffix
                                     
                                     self.param_details_text.setText(cleaned_details)
+                                    self.update_param_details_style()
                                     if is_submitter:
                                         self.log_debug(f"Loaded your pending details from Firestore for {param_id}")
                                         self.git_status_label.setText("✨ Your changes are pending review")
@@ -1542,6 +1581,7 @@ class VCMOverlay(QMainWindow):
                             
                             if cloud_details:
                                 self.param_details_text.setText(cloud_details)
+                                self.update_param_details_style()
                                 self.log_debug(f"Loaded parameter details from Realtime Database for {param_id}")
                                 self.git_status_label.setText("📡 Parameter data from database")
                         
@@ -1583,6 +1623,7 @@ class VCMOverlay(QMainWindow):
                                         cleaned_details = pending_details[:-16]  # Remove the suffix
                                     
                                     self.param_details_text.setText(cleaned_details)
+                                    self.update_param_details_style()
                                     if is_submitter:
                                         self.log_debug(f"Loaded your pending details from Realtime Database for {param_id}")
                                         self.git_status_label.setText("✨ Your changes are pending review")
@@ -1925,6 +1966,24 @@ Details: {self.param_details_text.toPlainText()}"""
         if text and isinstance(text, str):
             return text.startswith('[ECM]') or text.startswith('[TCM]')
         return False
+
+    def update_param_details_style(self):
+        """Update the styling for the parameter details text area to better display forum posts"""
+        self.param_details_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #111111;
+                color: #CCCCCC;
+                border: 1px solid #222222;
+                border-radius: 6px;
+                font-family: Consolas, monospace;
+                line-height: 1.4;
+            }
+            
+            QTextEdit[readOnly="true"] {
+                background-color: #0D0D0D;
+                color: #AAAAAA;
+            }
+        """)
 
 
 
