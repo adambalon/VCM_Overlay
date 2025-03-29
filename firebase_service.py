@@ -471,5 +471,156 @@ def get_parameter_from_firebase(param_id):
     except Exception as e:
         return False, f"Error retrieving parameter: {str(e)}", None
 
+def get_user_contributions(user_id):
+    """Get all contributions made by a specific user.
+    
+    Args:
+        user_id (str): User ID to get contributions for
+        
+    Returns:
+        list: List of contributions (pending, approved, rejected)
+    """
+    if not firebase:
+        print("Firebase is not initialized")
+        return []
+    
+    if not current_user:
+        print("You must be signed in to retrieve contributions")
+        return []
+    
+    contributions = []
+    
+    try:
+        if firestore_db:
+            # Use Firestore
+            print(f"Retrieving contributions for user {user_id} from Firestore...")
+            
+            # Get user email first
+            user_doc = firestore_db.collection('users').document(user_id).get()
+            user_email = user_doc.to_dict().get('email') if user_doc.exists else None
+            
+            if not user_email:
+                print(f"Could not find email for user ID {user_id}")
+                return []
+            
+            # Get pending submissions
+            pending_params = firestore_db.collection('pending').where('submitted_by', '==', user_email).get()
+            for param in pending_params:
+                param_data = param.to_dict()
+                param_data['id'] = param.id
+                param_data['status'] = 'pending'
+                
+                # Convert timestamp if it exists
+                if 'submitted_at' in param_data and hasattr(param_data['submitted_at'], 'timestamp'):
+                    param_data['timestamp'] = param_data['submitted_at'].timestamp() * 1000  # Convert to milliseconds
+                
+                # Add parameter name if not present
+                if 'name' in param_data and 'parameter_name' not in param_data:
+                    param_data['parameter_name'] = param_data['name']
+                
+                contributions.append(param_data)
+            
+            # Get approved parameters
+            approved_params = firestore_db.collection('parameters').where('submitted_by', '==', user_email).get()
+            for param in approved_params:
+                param_data = param.to_dict()
+                param_data['id'] = param.id
+                param_data['status'] = 'approved'
+                
+                # Convert timestamp if it exists
+                if 'approved_at' in param_data and hasattr(param_data['approved_at'], 'timestamp'):
+                    param_data['timestamp'] = param_data['approved_at'].timestamp() * 1000  # Convert to milliseconds
+                
+                # Add parameter name if not present
+                if 'name' in param_data and 'parameter_name' not in param_data:
+                    param_data['parameter_name'] = param_data['name']
+                
+                contributions.append(param_data)
+            
+            # Get rejected parameters (stored in a separate collection)
+            rejected_params = firestore_db.collection('rejected_parameters').where('submitted_by', '==', user_email).get()
+            for param in rejected_params:
+                param_data = param.to_dict()
+                param_data['id'] = param.id
+                param_data['status'] = 'rejected'
+                
+                # Convert timestamp if it exists
+                if 'rejected_at' in param_data and hasattr(param_data['rejected_at'], 'timestamp'):
+                    param_data['timestamp'] = param_data['rejected_at'].timestamp() * 1000  # Convert to milliseconds
+                
+                # Add parameter name if not present
+                if 'name' in param_data and 'parameter_name' not in param_data:
+                    param_data['parameter_name'] = param_data['name']
+                
+                contributions.append(param_data)
+            
+            # Sort by timestamp, newest first
+            contributions.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+            
+        else:
+            # Use Realtime Database
+            db = firebase.database()
+            
+            # First get user email
+            user_data = db.child('users').child(user_id).get(token=current_user['token']).val()
+            user_email = user_data.get('email') if user_data else None
+            
+            if not user_email:
+                print(f"Could not find email for user ID {user_id}")
+                return []
+            
+            # Get pending parameters
+            pending_params = db.child('pending').get(token=current_user['token']).val() or {}
+            for param_id, param_data in pending_params.items():
+                if param_data.get('submitted_by') == user_email:
+                    contribution = param_data.copy()
+                    contribution['id'] = param_id
+                    contribution['status'] = 'pending'
+                    contribution['timestamp'] = contribution.get('submitted_at', 0)
+                    
+                    # Add parameter name if not present
+                    if 'name' in contribution and 'parameter_name' not in contribution:
+                        contribution['parameter_name'] = contribution['name']
+                    
+                    contributions.append(contribution)
+            
+            # Get approved parameters
+            approved_params = db.child('parameters').get(token=current_user['token']).val() or {}
+            for param_id, param_data in approved_params.items():
+                if param_data.get('submitted_by') == user_email:
+                    contribution = param_data.copy()
+                    contribution['id'] = param_id
+                    contribution['status'] = 'approved'
+                    contribution['timestamp'] = contribution.get('approved_at', 0)
+                    
+                    # Add parameter name if not present
+                    if 'name' in contribution and 'parameter_name' not in contribution:
+                        contribution['parameter_name'] = contribution['name']
+                    
+                    contributions.append(contribution)
+            
+            # Get rejected parameters
+            rejected_params = db.child('rejected_parameters').get(token=current_user['token']).val() or {}
+            for param_id, param_data in rejected_params.items():
+                if param_data.get('submitted_by') == user_email:
+                    contribution = param_data.copy()
+                    contribution['id'] = param_id
+                    contribution['status'] = 'rejected'
+                    contribution['timestamp'] = contribution.get('rejected_at', 0)
+                    
+                    # Add parameter name if not present
+                    if 'name' in contribution and 'parameter_name' not in contribution:
+                        contribution['parameter_name'] = contribution['name']
+                    
+                    contributions.append(contribution)
+            
+            # Sort by timestamp, newest first
+            contributions.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+    
+    except Exception as e:
+        print(f"Error retrieving user contributions: {str(e)}")
+    
+    return contributions
+
 # Initialize Firebase when module is imported
 initialize() 

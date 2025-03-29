@@ -270,6 +270,30 @@
       "description": "",
       "details": "",
       "added_time": "2025-03-29T05:11:44.453632"
+    },
+    "12680": {
+      "name": "Lightoff Spark Idle In Gear",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T06:44:43.234088"
+    },
+    "12673": {
+      "name": "Lightoff Spark Mult vs. ERT",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T06:44:43.560084"
+    },
+    "12674": {
+      "name": "Lightoff Spark Mult vs. TPS",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T06:44:43.677740"
+    },
+    "12672": {
+      "name": "Lightoff Spark Mult vs. ECT",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T06:54:10.890398"
     }
   }
 }

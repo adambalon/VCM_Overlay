@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 
                             QLabel, QPushButton, QTextEdit, QTabWidget, QLineEdit, 
 
-                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem)
+                            QGroupBox, QGridLayout, QScrollArea, QSizeGrip, QSizePolicy, QDialog, QFormLayout, QDialogButtonBox, QMessageBox, QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView)
 
 from PyQt5.QtCore import QTimer, Qt, QEvent, QRect, QSize
 
@@ -47,6 +47,16 @@ import uuid
 import urllib.request
 
 import urllib.error
+
+
+
+# Import Change Log Dialog 
+try:
+    from change_log_dialog import ChangeLogDialog
+    print("Change Log Dialog imported successfully")
+except ImportError as e:
+    print(f"Change Log Dialog import failed: {str(e)}")
+    print("Change Log feature will be disabled.")
 
 
 
@@ -597,6 +607,24 @@ class VCMOverlay(QMainWindow):
         self.auth_button.clicked.connect(self.handle_auth_button)
         auth_layout.addWidget(self.auth_button)
         
+        # Add Change Log button
+        self.change_log_button = QPushButton("Change Log")
+        self.change_log_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2C3E50;
+                color: #FFFFFF;
+                border: none;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-size: 8pt;
+            }
+            QPushButton:hover {
+                background-color: #34495E;
+            }
+        """)
+        self.change_log_button.clicked.connect(self.show_change_log)
+        auth_layout.addWidget(self.change_log_button)
+        
         title_bar_layout.addWidget(self.auth_container)
         
         # Window control buttons
@@ -1086,17 +1114,44 @@ class VCMOverlay(QMainWindow):
         """Open the manage pending parameters dialog"""
         if not FIREBASE_AVAILABLE:
             QMessageBox.warning(self, "Firebase Not Available", 
-                "Firebase is not available. Cannot manage pending parameters.")
+                "Firebase is required for managing pending parameters.")
+            return
+            
+        if not firebase_service.get_current_user():
+            QMessageBox.information(self, "Login Required", 
+                "You must be logged in to manage pending parameters.")
             return
         
-        try:
-            self.log_debug("Opening manage pending parameters dialog...")
-            dialog = ManagePendingDialog(self)
-            dialog.exec_()
-        except Exception as e:
-            self.log_debug(f"Error opening manage pending dialog: {str(e)}")
-            QMessageBox.critical(self, "Error", 
-                f"Failed to open manage pending dialog: {str(e)}")
+        # Create and show the dialog
+        pending_dialog = ManagePendingDialog(self)
+        pending_dialog.exec_()
+        
+    def show_change_log(self):
+        """Show the Change Log dialog with user contributions"""
+        if not FIREBASE_AVAILABLE:
+            QMessageBox.information(self, "Firebase Required", 
+                "Firebase is required for accessing change logs. Please check your configuration.")
+            return
+        
+        current_user = firebase_service.get_current_user()
+        if not current_user:
+            # Prompt to sign in
+            reply = QMessageBox.question(self, "Authentication Required", 
+                "You need to sign in to view your change log.\nWould you like to sign in now?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                
+            if reply == QMessageBox.Yes:
+                self.handle_auth_button()
+                # Check if user is signed in after login dialog
+                current_user = firebase_service.get_current_user()
+                if not current_user:
+                    return  # Login cancelled or failed
+            else:
+                return  # User declined to sign in
+        
+        # Create and show the Change Log dialog
+        change_log_dialog = ChangeLogDialog(self)
+        change_log_dialog.exec_()
 
     def save_to_firebase(self):
         """Save current parameter to Firebase"""
@@ -2120,7 +2175,7 @@ def get_parameter_details_from_json(param_id, ecm_type):
 
 
 class ManagePendingDialog(QDialog):
-    """Dialog for managing pending parameter submissions"""
+    """Dialog for managing pending parameter changes"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Manage Pending Parameters")
