@@ -58,8 +58,17 @@ import threading
 
 from functools import partial
 
-import firebase_service
+# Import Firebase service module
+try:
+    import firebase_service
+    FIREBASE_AVAILABLE = firebase_service.is_available()
+    print("Firebase service successfully imported")
+except ImportError as e:
+    FIREBASE_AVAILABLE = False
+    print(f"Firebase service not available. Error: {str(e)}")
+    print("Authentication and cloud features disabled.")
 
+# Import Firestore if available
 try:
     from google.cloud import firestore
     FIRESTORE_AVAILABLE = True
@@ -75,14 +84,6 @@ except ImportError as e:
     CHANGE_LOG_AVAILABLE = False
     print(f"Change Log Dialog not available. Error: {str(e)}")
     print("Change Log feature will be disabled.")
-
-# Import Firebase service module
-if FIREBASE_AVAILABLE:
-    print("Firebase service successfully imported")
-else:
-    print("Authentication and cloud features disabled.")
-
-
 
 # Define constants for parameter types
 MODULE_TYPES = ["ECM", "TCM", "BCM", "PCM", "ICM", "OTHER"]
@@ -469,24 +470,18 @@ class VCMOverlay(QMainWindow):
         self.resize_corner_size = 16
         
         # Set minimum size
-        self.setMinimumSize(360, 400)
+        self.setMinimumWidth(650)
+        self.setMinimumHeight(400)
         
-        # Flag to disable git operations (for development)
-        self.no_git = no_git
-        
-        # Last parameter text to avoid redundant updates
-        self.last_parameter_text = ""
-        
-        # Initialize debug log buffer
-        self.debug_log = []
-        
-        # Detection flag
+        # Initialize detection flag and last parameter text
         self.detection_enabled = False
-        
-        # Parameter detection variables
+        self.last_parameter_text = None
         self.current_parameter_edit_hwnd = None
         
-        # Initialize UI
+        # Debug log init
+        self.debug_log = []
+        
+        # Set up main UI
         self.initUI()
         
         # Initialize Firebase services if available
@@ -1475,13 +1470,20 @@ class VCMOverlay(QMainWindow):
             self.parameter_header_label.setText(header_part)
         
         # Clear all labels but set a fixed height to prevent layout shifts
-        self.param_type_label.setText("")
-        self.param_id_label.setText("")
-        self.param_name_label.setText("")
-        self.param_desc_label.setText("")
-        self.param_details_text.clear()  # Clear the details text box
-        self.git_status_label.setText("")  # Clear status message
-        self.forum_messages.clear()  # Clear forum messages
+        if hasattr(self, 'param_type_label'):
+            self.param_type_label.setText("")
+        if hasattr(self, 'param_id_label'):
+            self.param_id_label.setText("")
+        if hasattr(self, 'param_name_label'):
+            self.param_name_label.setText("")
+        if hasattr(self, 'param_desc_label'):
+            self.param_desc_label.setText("")
+        if hasattr(self, 'param_details_text'):
+            self.param_details_text.clear()  # Clear the details text box
+        if hasattr(self, 'git_status_label'):
+            self.git_status_label.setText("")  # Clear status message
+        if hasattr(self, 'forum_messages'):
+            self.forum_messages.clear()  # Clear forum messages
         
         # Extract specific parts
         try:
@@ -1866,7 +1868,8 @@ Details: {self.param_details_text.toPlainText()}"""
                 # Check if handle is valid
                 if not user32.IsWindow(self.current_parameter_edit_hwnd):
                     self.log_debug(f"Edit control {self.current_parameter_edit_hwnd} is not a valid window")
-                    self.parameter_header_label.setText("No parameter detected - searching...")
+                    if hasattr(self, 'parameter_header_label'):
+                        self.parameter_header_label.setText("No parameter detected - searching...")
                     self.auto_detect_parameter_edit_control()
                     return
                 
@@ -1874,15 +1877,21 @@ Details: {self.param_details_text.toPlainText()}"""
                 text = get_edit_text(self.current_parameter_edit_hwnd)
                 if self.is_parameter_text(text):
                     # Parse and display parameter information
-                    self.update_parameter_info(text)
-                    self.update_title_handle_indicator(self.current_parameter_edit_hwnd, True)
+                    try:
+                        self.update_parameter_info(text)
+                        if hasattr(self, 'current_parameter_edit_hwnd'):
+                            self.update_title_handle_indicator(self.current_parameter_edit_hwnd, True)
+                    except Exception as e:
+                        self.log_debug(f"Error updating parameter info: {str(e)}")
                 else:
                     self.log_debug(f"Edit control {self.current_parameter_edit_hwnd} does not contain parameter text")
-                    self.parameter_header_label.setText("Invalid parameter format - searching...")
+                    if hasattr(self, 'parameter_header_label'):
+                        self.parameter_header_label.setText("Invalid parameter format - searching...")
                     self.auto_detect_parameter_edit_control()
             except Exception as e:
                 self.log_debug(f"Error in check_parameter_edit_control: {str(e)}")
-                self.parameter_header_label.setText("Error checking parameter - searching...")
+                if hasattr(self, 'parameter_header_label'):
+                    self.parameter_header_label.setText("Error checking parameter - searching...")
                 self.auto_detect_parameter_edit_control()
         else:
             self.log_debug("No parameter edit control set - auto-detecting...")
@@ -1914,7 +1923,8 @@ Details: {self.param_details_text.toPlainText()}"""
                     continue
             
             self.log_debug("Could not find parameter edit control")
-            self.parameter_header_label.setText("No parameter detected - please set manually")
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setText("No parameter detected - please set manually")
         except Exception as e:
             self.log_debug(f"Error in auto_detect_parameter_edit_control: {str(e)}")
             
@@ -1945,14 +1955,19 @@ Details: {self.param_details_text.toPlainText()}"""
                 self.handle_status_label.setStyleSheet("color: #AAAAAA; font-weight: bold;")
                 
     def update_title_handle_indicator(self, handle, is_valid=False):
-        """Update the window title to show current handle and status"""
-        try:
-            status = "✓" if is_valid else "✗"
-            title = f"VCM Parameter ID Monitor - Handle: {handle} {status}"
-            self.setWindowTitle(title)
-        except Exception as e:
-            self.log_debug(f"Error updating title: {str(e)}")
-            
+        """Update the main parameter header with handle info for visual confirmation"""
+        if hasattr(self, 'parameter_header_label'):
+            if is_valid:
+                handle_suffix = f" (ID: {handle})"
+                current_text = self.parameter_header_label.text()
+                
+                # If the text doesn't already have a handle ID suffix, add it
+                if " (ID:" not in current_text:
+                    self.parameter_header_label.setText(f"{current_text} {handle_suffix}")
+            else:
+                # If invalid, show the handle with indication
+                self.parameter_header_label.setText(f"Invalid Handle: {handle}")
+    
     def find_vcm_editor_window(self):
         """Find the VCM Editor window by title"""
         result = [None]
@@ -2060,6 +2075,10 @@ Details: {self.param_details_text.toPlainText()}"""
 
     def load_parameter_forum(self, param_id):
         """Load forum messages for a parameter"""
+        if not hasattr(self, 'forum_messages'):
+            self.log_debug("Forum messages widget not available")
+            return
+            
         self.forum_messages.clear()
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
@@ -2149,6 +2168,10 @@ Details: {self.param_details_text.toPlainText()}"""
     
     def save_to_forum(self, param_id, user_email, timestamp, content):
         """Save a new post to the parameter forum"""
+        if not hasattr(self, 'forum_messages'):
+            self.log_debug("Forum messages widget not available")
+            return False
+            
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
             self.log_debug("Cannot save to forum: Firebase not available or user not logged in")
             return False
