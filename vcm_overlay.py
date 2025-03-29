@@ -1090,6 +1090,8 @@ class VCMOverlay(QMainWindow):
                 self.parameter_header_label.setText("Parameter detection active")
             if hasattr(self, 'git_status_label'):
                 self.git_status_label.setText("Ready for parameter detection")
+            if hasattr(self, 'forum_messages'):
+                self.forum_messages.clear()
             
             # Enable parameter fields
             if hasattr(self, 'param_details_text'):
@@ -1145,6 +1147,22 @@ class VCMOverlay(QMainWindow):
             self.auth_button.setText("Login")
             if hasattr(self, 'save_to_cloud_button'):
                 self.save_to_cloud_button.setEnabled(False)
+            
+            # Clear parameter fields
+            if hasattr(self, 'param_id_label'):
+                self.param_id_label.setText("")
+            if hasattr(self, 'param_name_label'):
+                self.param_name_label.setText("")
+            if hasattr(self, 'param_desc_label'):
+                self.param_desc_label.setText("")
+            if hasattr(self, 'param_details_text'):
+                self.param_details_text.clear()
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setText("LOGIN REQUIRED")
+            if hasattr(self, 'git_status_label'):
+                self.git_status_label.setText("")
+            if hasattr(self, 'forum_messages'):
+                self.forum_messages.clear()
             
             # Disable parameter fields
             if hasattr(self, 'param_details_text'):
@@ -1252,8 +1270,8 @@ class VCMOverlay(QMainWindow):
         user_email = current_user.get('email', 'Anonymous')
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Format the new submission as a forum post
-        formatted_post = self.format_forum_post(user_email, timestamp, param_details)
+        # Format the new submission as a forum post (store the formatted version separately)
+        forum_post = self.format_forum_post(user_email, timestamp, param_details)
         
         # Prepare parameter data
         param_data = {
@@ -1261,7 +1279,8 @@ class VCMOverlay(QMainWindow):
             "type": param_type,
             "name": param_name,
             "description": param_desc,
-            "details": formatted_post,
+            "details": param_details,  # Keep original details for the parameter data
+            "forum_post": forum_post,  # Add forum post separately
             "timestamp": datetime.datetime.now().isoformat()
         }
         
@@ -1276,10 +1295,8 @@ class VCMOverlay(QMainWindow):
                 self.log_debug(f"No changes detected for parameter {param_id}")
                 return
                 
-            # Update the details text with the forum post format
-            self.param_details_text.setText(formatted_post)
-            # Apply the updated styling
-            self.update_param_details_style()
+            # We do NOT update the details text with forum post format
+            # Keep the original details
             
             # Add to forum messages
             self.save_to_forum(param_id, user_email, timestamp, param_details)
@@ -1564,6 +1581,7 @@ class VCMOverlay(QMainWindow):
                                 self.param_desc_label.setText(cloud_desc)
                             
                             if cloud_details:
+                                # Use only the details field, not forum posts
                                 self.param_details_text.setText(cloud_details)
                                 self.update_param_details_style()
                                 self.log_debug(f"Loaded parameter details from Firestore for {param_id}")
@@ -1611,8 +1629,16 @@ class VCMOverlay(QMainWindow):
                                     if pending_details.endswith(" - pending review"):
                                         cleaned_details = pending_details[:-16]  # Remove the suffix
                                     
-                                    self.param_details_text.setText(cleaned_details)
-                                    self.update_param_details_style()
+                                    # Use only the details field, not forum posts
+                                    if not self.contains_forum_markers(cleaned_details):
+                                        self.param_details_text.setText(cleaned_details)
+                                        self.update_param_details_style()
+                                    else:
+                                        # If it contains forum markers, extract just the actual details
+                                        actual_details = self.extract_details_from_forum(cleaned_details)
+                                        self.param_details_text.setText(actual_details)
+                                        self.update_param_details_style()
+                                        
                                     if is_submitter:
                                         self.log_debug(f"Loaded your pending details from Firestore for {param_id}")
                                         self.git_status_label.setText("✨ Your changes are pending review")
@@ -1650,7 +1676,13 @@ class VCMOverlay(QMainWindow):
                                 self.param_desc_label.setText(cloud_desc)
                             
                             if cloud_details:
-                                self.param_details_text.setText(cloud_details)
+                                # Use only the details field, not forum posts
+                                if not self.contains_forum_markers(cloud_details):
+                                    self.param_details_text.setText(cloud_details)
+                                else:
+                                    # If it contains forum markers, extract just the actual details
+                                    actual_details = self.extract_details_from_forum(cloud_details)
+                                    self.param_details_text.setText(actual_details)
                                 self.update_param_details_style()
                                 self.log_debug(f"Loaded parameter details from Realtime Database for {param_id}")
                                 self.git_status_label.setText("📡 Parameter data from database")
@@ -1692,8 +1724,15 @@ class VCMOverlay(QMainWindow):
                                     if pending_details.endswith(" - pending review"):
                                         cleaned_details = pending_details[:-16]  # Remove the suffix
                                     
-                                    self.param_details_text.setText(cleaned_details)
+                                    # Use only the details field, not forum posts
+                                    if not self.contains_forum_markers(cleaned_details):
+                                        self.param_details_text.setText(cleaned_details)
+                                    else:
+                                        # If it contains forum markers, extract just the actual details
+                                        actual_details = self.extract_details_from_forum(cleaned_details)
+                                        self.param_details_text.setText(actual_details)
                                     self.update_param_details_style()
+                                    
                                     if is_submitter:
                                         self.log_debug(f"Loaded your pending details from Realtime Database for {param_id}")
                                         self.git_status_label.setText("✨ Your changes are pending review")
@@ -1724,6 +1763,39 @@ Details: {self.param_details_text.toPlainText()}"""
             self.log_debug(f"Error parsing parameter text: {str(e)}")
             self.status_label.setText("ERROR PARSING PARAMETER")
     
+    def contains_forum_markers(self, text):
+        """Check if the text contains forum post markers"""
+        return text and ('=' * 50 in text and '[' in text and 'Posted by:' in text)
+    
+    def extract_details_from_forum(self, text):
+        """Extract the actual details from text that contains forum markers"""
+        if not self.contains_forum_markers(text):
+            return text
+            
+        # Find the first forum marker
+        delimiter = '=' * 50
+        if delimiter in text:
+            # Get the content before the first forum marker
+            parts = text.split(delimiter, 1)
+            if parts and parts[0].strip():
+                return parts[0].strip()
+                
+            # If there's no content before the first marker, try to extract the first post content
+            if len(parts) > 1:
+                post_content = parts[1]
+                # Find the content between the header and the next post
+                if '-' * 50 in post_content:
+                    content_parts = post_content.split('-' * 50, 1)
+                    if len(content_parts) > 1:
+                        # Extract content after the header up to the next delimiter or end
+                        content = content_parts[1].strip()
+                        if delimiter in content:
+                            content = content.split(delimiter, 1)[0].strip()
+                        return content
+        
+        # If no forum markers found or can't extract content, return the original
+        return text
+
     def try_add_parameter_to_json(self, param_id, param_name, ecm_type):
         """This method is now just a stub - we no longer use JSON files"""
         # This method is kept as a stub to avoid breaking any existing code references
