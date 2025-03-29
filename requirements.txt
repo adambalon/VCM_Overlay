@@ -4,4 +4,10 @@ keyboard==0.13.5
 mss==9.0.1
 numpy>=1.22.0
 pywinauto==0.6.8
-pynput==1.7.6 
+pynput==1.7.6
+pyrebase4==4.8.0
+firebase-admin==6.7.0
+requests==2.32.3
+urllib3==1.26.20
+python-jwt==4.1.0
+pycryptodome==3.22.0 

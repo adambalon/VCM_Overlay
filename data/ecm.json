@@ -234,6 +234,24 @@
       "description": "",
       "details": "",
       "added_time": "2025-03-29T04:57:47.733668"
+    },
+    "12632": {
+      "name": "Idle Spark Adder Mult vs. Baro",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:58:05.566944"
+    },
+    "12676": {
+      "name": "Lightoff Spark",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:58:05.780091"
+    },
+    "12631": {
+      "name": "Idle Spark Adder vs. ECT (In Gear)",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:58:26.015034"
     }
   }
 }

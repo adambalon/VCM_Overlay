@@ -1,0 +1,25 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Firebase sensitive files
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# Environment variables
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-*
+
+# Build files
+build/
+dist/
+*.egg-info/ 
