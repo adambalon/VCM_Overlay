@@ -300,6 +300,8 @@ class ChangeLogDialog(QDialog):
                 
             # Get values
             param_name = contribution.get('parameter_name', '')
+            if not param_name:
+                param_name = contribution.get('name', '')
             
             # Get old value and new value, ensuring they're not None
             old_value = contribution.get('old_value', '')
@@ -313,6 +315,36 @@ class ChangeLogDialog(QDialog):
             # Format values to ensure they display well
             old_value = str(old_value)
             new_value = str(new_value)
+            
+            # Also check if we have more specific old/new values for fields
+            if not old_value and contribution.get('old_details'):
+                old_value = str(contribution.get('old_details', ''))
+            if not new_value and contribution.get('new_details'):
+                new_value = str(contribution.get('new_details', ''))
+                
+            # If still no values, check description fields
+            if not old_value and contribution.get('old_description'):
+                old_value = str(contribution.get('old_description', ''))
+            if not new_value and contribution.get('new_description'):
+                new_value = str(contribution.get('new_description', ''))
+                
+            # If still no old value but we have 'details' - extract from it
+            if not old_value and contribution.get('details'):
+                details = contribution.get('details', '')
+                # Try to extract old value from details text
+                if isinstance(details, str) and details:
+                    import re
+                    # Look for common patterns in details
+                    old_patterns = [
+                        r"Old Value:\s*(.*?)(?:,|\n|$)",
+                        r"Changed from\s*(.*?)\s+to",
+                        r"Previous value:\s*(.*?)(?:,|\n|$)",
+                    ]
+                    for pattern in old_patterns:
+                        match = re.search(pattern, details)
+                        if match:
+                            old_value = match.group(1).strip()
+                            break
             
             # Truncate values if too long for display
             max_display_length = 40
@@ -337,6 +369,10 @@ class ChangeLogDialog(QDialog):
             # Store full values as data for viewing in detail
             old_item.setData(Qt.UserRole, old_value)
             new_item.setData(Qt.UserRole, new_value)
+            
+            # Also store the full contribution data for reference
+            for item in [date_item, param_item, old_item, new_item, status_item]:
+                item.setData(Qt.UserRole + 1, contribution)
             
             # Color code the status
             if status_text.lower() == 'pending':
@@ -381,10 +417,6 @@ class ChangeLogDialog(QDialog):
     
     def show_cell_details(self, row, column):
         """Show details of a cell when double-clicked"""
-        # Only show details for old and new values
-        if column < 2 or column > 3:
-            return
-            
         # Get the current tab and table
         current_tab = self.tab_widget.currentWidget()
         table = current_tab.table
@@ -397,36 +429,140 @@ class ChangeLogDialog(QDialog):
         # Get the column name
         column_name = table.horizontalHeaderItem(column).text()
         
-        # Get the value (prefer the data stored in UserRole)
-        value = item.data(Qt.UserRole) if item.data(Qt.UserRole) else item.text()
+        # Get the full contribution data
+        contribution = item.data(Qt.UserRole + 1)
+        if not contribution:
+            # Fallback to just showing the cell value
+            value = item.data(Qt.UserRole) if item.data(Qt.UserRole) else item.text()
+            self.show_simple_detail(column_name, value)
+            return
         
-        # Format the value for display
-        if value:
-            # Create a message box with the details
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(f"Contribution Detail")
-            msg_box.setText(f"{column_name}:")
-            msg_box.setDetailedText(str(value))
+        # Depending on the column, show different details
+        if column == 0:  # Date column
+            # Show submission details
+            self.show_submission_details(contribution)
+        elif column == 1:  # Parameter column
+            # Show parameter details
+            self.show_parameter_details(contribution)
+        elif column == 2 or column == 3:  # Old Value or New Value columns
+            # Get the value (prefer the data stored in UserRole)
+            value = item.data(Qt.UserRole) if item.data(Qt.UserRole) else item.text()
+            self.show_simple_detail(column_name, value)
+        elif column == 4:  # Status column
+            # Show status details
+            self.show_status_details(contribution)
+
+    def show_simple_detail(self, title, value):
+        """Show a simple detail dialog with a title and value"""
+        # Create a message box with the details
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(f"Contribution Detail")
+        msg_box.setText(f"{title}:")
+        msg_box.setDetailedText(str(value))
+        
+        # Style the message box for dark theme
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #222222;
+                color: #CCCCCC;
+            }
+            QLabel {
+                color: #CCCCCC;
+            }
+            QPushButton {
+                background-color: #2C3E50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #34495E;
+            }
+        """)
+        
+        msg_box.exec_()
+        
+    def show_submission_details(self, contribution):
+        """Show detailed information about the submission"""
+        # Extract submission details
+        submitted_by = contribution.get('submitted_by', 'Unknown')
+        submitted_at = contribution.get('submitted_at', 'Unknown')
+        
+        # Format timestamp if it's a number
+        if isinstance(submitted_at, (int, float)):
+            submitted_at = datetime.datetime.fromtimestamp(submitted_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Create details text
+        details = f"Submitted by: {submitted_by}\n"
+        details += f"Submission date: {submitted_at}\n\n"
+        
+        # Add other relevant timestamps
+        if 'updated_at' in contribution:
+            updated_at = contribution['updated_at']
+            if isinstance(updated_at, (int, float)):
+                updated_at = datetime.datetime.fromtimestamp(updated_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            details += f"Last updated: {updated_at}\n"
             
-            # Style the message box for dark theme
-            msg_box.setStyleSheet("""
-                QMessageBox {
-                    background-color: #222222;
-                    color: #CCCCCC;
-                }
-                QLabel {
-                    color: #CCCCCC;
-                }
-                QPushButton {
-                    background-color: #2C3E50;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 4px;
-                }
-                QPushButton:hover {
-                    background-color: #34495E;
-                }
-            """)
+        if 'approved_at' in contribution:
+            approved_at = contribution['approved_at']
+            if isinstance(approved_at, (int, float)):
+                approved_at = datetime.datetime.fromtimestamp(approved_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            details += f"Approved at: {approved_at}\n"
             
-            msg_box.exec_() 
+        if 'rejected_at' in contribution:
+            rejected_at = contribution['rejected_at']
+            if isinstance(rejected_at, (int, float)):
+                rejected_at = datetime.datetime.fromtimestamp(rejected_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            details += f"Rejected at: {rejected_at}\n"
+        
+        # Show the details
+        self.show_simple_detail("Submission Information", details)
+        
+    def show_parameter_details(self, contribution):
+        """Show detailed information about the parameter"""
+        # Extract parameter details
+        param_id = contribution.get('param_id', contribution.get('id', 'Unknown'))
+        param_name = contribution.get('parameter_name', contribution.get('name', 'Unknown'))
+        param_type = contribution.get('type', 'Unknown')
+        
+        # Create details text
+        details = f"Parameter ID: {param_id}\n"
+        details += f"Parameter Name: {param_name}\n"
+        details += f"Parameter Type: {param_type}\n\n"
+        
+        # Add description if available
+        if 'description' in contribution:
+            details += f"Description:\n{contribution['description']}\n\n"
+            
+        # Add full details if available
+        if 'details' in contribution:
+            details += f"Full Details:\n{contribution['details']}\n"
+        
+        # Show the details
+        self.show_simple_detail("Parameter Information", details)
+        
+    def show_status_details(self, contribution):
+        """Show detailed information about the status"""
+        # Extract status details
+        status = contribution.get('status', 'Unknown').capitalize()
+        
+        # Create details text
+        details = f"Current Status: {status}\n\n"
+        
+        # Add additional info based on status
+        if status.lower() == 'pending':
+            details += "This contribution is waiting for review by a moderator.\n"
+        elif status.lower() == 'approved':
+            approver = contribution.get('approved_by', 'Unknown')
+            details += f"This contribution was approved by: {approver}\n"
+        elif status.lower() == 'rejected':
+            rejector = contribution.get('rejected_by', 'Unknown')
+            details += f"This contribution was rejected by: {rejector}\n"
+            
+            # Add rejection reason if available
+            if 'rejection_reason' in contribution:
+                details += f"\nRejection Reason:\n{contribution['rejection_reason']}\n"
+        
+        # Show the details
+        self.show_simple_detail("Status Information", details) 

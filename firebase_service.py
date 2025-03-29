@@ -291,6 +291,39 @@ def save_parameter_to_firebase(param_id, param_data):
         enriched_data = param_data.copy()
         enriched_data['updated_by'] = current_user.get('email', 'Unknown')
         
+        # Explicitly add old and new values for change tracking
+        if existing_data:
+            # For important fields, track old and new values
+            for field in ['name', 'description', 'details']:
+                if field in param_data:
+                    # Save new value
+                    enriched_data[f'new_{field}'] = param_data[field]
+                    # Save old value if it exists in existing data
+                    if field in existing_data:
+                        enriched_data[f'old_{field}'] = existing_data[field]
+                    else:
+                        enriched_data[f'old_{field}'] = ""
+        else:
+            # No existing data, so old values are empty
+            for field in ['name', 'description', 'details']:
+                if field in param_data:
+                    enriched_data[f'new_{field}'] = param_data[field]
+                    enriched_data[f'old_{field}'] = ""
+            
+        # Ensure we have old_value and new_value fields for the change log
+        if 'new_details' in enriched_data and 'old_details' in enriched_data:
+            # Use details as the primary change value if available
+            enriched_data['new_value'] = enriched_data['new_details']
+            enriched_data['old_value'] = enriched_data['old_details']
+        elif 'new_description' in enriched_data and 'old_description' in enriched_data:
+            # Fall back to description
+            enriched_data['new_value'] = enriched_data['new_description']
+            enriched_data['old_value'] = enriched_data['old_description']
+        elif 'new_name' in enriched_data and 'old_name' in enriched_data:
+            # Last resort is name
+            enriched_data['new_value'] = enriched_data['new_name']
+            enriched_data['old_value'] = enriched_data['old_name']
+            
         # Check if we should use Firestore or Realtime Database
         if firestore_db:
             # Get user role from Firestore
@@ -309,7 +342,8 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Admin users save directly to parameters collection
                 print(f"User is admin, saving parameter {param_id} directly to parameters collection...")
                 
-                # Don't append " - cloud saved" to details anymore, we're showing status in the UI
+                # Add param_id to ensure it's searchable
+                enriched_data['param_id'] = param_id
                 
                 # Check if parameter already exists
                 param_ref = firestore_db.collection('parameters').where('param_id', '==', param_id).limit(1).get()
@@ -321,7 +355,6 @@ def save_parameter_to_firebase(param_id, param_data):
                     return True, f"Parameter {param_id} updated in parameters collection"
                 else:
                     # Create new parameter
-                    enriched_data['param_id'] = param_id  # Ensure param_id is in the document
                     enriched_data['approved_by'] = current_user.get('email', 'Unknown')
                     enriched_data['approved_at'] = firestore.SERVER_TIMESTAMP
                     firestore_db.collection('parameters').add(enriched_data)
@@ -330,19 +363,11 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Regular users save to pending collection
                 print(f"User is not admin, saving parameter {param_id} to pending collection...")
                 
-                # Don't append " - pending review" to details anymore, we're showing status in the UI
-                
                 # Add pending-specific fields
                 enriched_data['param_id'] = param_id
                 enriched_data['submitted_by'] = current_user.get('email', 'Unknown')
                 enriched_data['submitted_at'] = firestore.SERVER_TIMESTAMP
                 enriched_data['status'] = 'pending'
-                
-                # Also store old values if we have existing data
-                if existing_data:
-                    for field in ['name', 'description', 'details']:
-                        if field in existing_data:
-                            enriched_data[f'old_{field}'] = existing_data[field]
                 
                 # Check if already in pending
                 pending_ref = firestore_db.collection('pending').where('param_id', '==', param_id).limit(1).get()
@@ -379,8 +404,6 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Admin users save directly to parameters
                 print(f"User is admin, saving parameter {param_id} directly to parameters node...")
                 
-                # Don't append " - cloud saved" to details anymore, we're showing status in the UI
-                
                 # Add approval info for admins
                 enriched_data['approved_by'] = current_user.get('email', 'Unknown')
                 enriched_data['approved_at'] = {".sv": "timestamp"}
@@ -391,18 +414,10 @@ def save_parameter_to_firebase(param_id, param_data):
                 # Regular users save to pending
                 print(f"User is not admin, saving parameter {param_id} to pending node...")
                 
-                # Don't append " - pending review" to details anymore, we're showing status in the UI
-                
                 # Add submission info
                 enriched_data['submitted_by'] = current_user.get('email', 'Unknown')
                 enriched_data['submitted_at'] = {".sv": "timestamp"}
                 enriched_data['status'] = 'pending'
-                
-                # Also store old values if we have existing data
-                if existing_data:
-                    for field in ['name', 'description', 'details']:
-                        if field in existing_data:
-                            enriched_data[f'old_{field}'] = existing_data[field]
                 
                 db.child('pending').child(param_id).set(enriched_data, token=current_user['token'])
                 return True, f"Parameter {param_id} saved to pending"
@@ -530,18 +545,13 @@ def get_user_contributions(user_id):
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
                 
-                # Extract old and new values from details if they're not directly available
-                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
-                    old_val, new_val = extract_values_from_details(param_data['details'])
-                    if 'old_value' not in param_data and old_val:
-                        param_data['old_value'] = old_val
-                    if 'new_value' not in param_data and new_val:
-                        param_data['new_value'] = new_val
+                # Make sure we have old_value and new_value fields - with improved extraction
+                ensure_old_new_values(param_data)
                 
                 contributions.append(param_data)
             
             # Get approved parameters
-            approved_params = firestore_db.collection('parameters').where('submitted_by', '==', user_email).get()
+            approved_params = firestore_db.collection('parameters').where('updated_by', '==', user_email).get()
             for param in approved_params:
                 param_data = param.to_dict()
                 param_data['id'] = param.id
@@ -550,18 +560,15 @@ def get_user_contributions(user_id):
                 # Convert timestamp if it exists
                 if 'approved_at' in param_data and hasattr(param_data['approved_at'], 'timestamp'):
                     param_data['timestamp'] = param_data['approved_at'].timestamp() * 1000  # Convert to milliseconds
+                elif 'updated_at' in param_data and hasattr(param_data['updated_at'], 'timestamp'):
+                    param_data['timestamp'] = param_data['updated_at'].timestamp() * 1000  # Convert to milliseconds
                 
                 # Add parameter name if not present
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
                 
-                # Extract old and new values from details if they're not directly available
-                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
-                    old_val, new_val = extract_values_from_details(param_data['details'])
-                    if 'old_value' not in param_data and old_val:
-                        param_data['old_value'] = old_val
-                    if 'new_value' not in param_data and new_val:
-                        param_data['new_value'] = new_val
+                # Make sure we have old_value and new_value fields - with improved extraction
+                ensure_old_new_values(param_data)
                 
                 contributions.append(param_data)
             
@@ -580,13 +587,8 @@ def get_user_contributions(user_id):
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
                 
-                # Extract old and new values from details if they're not directly available
-                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
-                    old_val, new_val = extract_values_from_details(param_data['details'])
-                    if 'old_value' not in param_data and old_val:
-                        param_data['old_value'] = old_val
-                    if 'new_value' not in param_data and new_val:
-                        param_data['new_value'] = new_val
+                # Make sure we have old_value and new_value fields - with improved extraction
+                ensure_old_new_values(param_data)
                 
                 contributions.append(param_data)
             
@@ -618,36 +620,26 @@ def get_user_contributions(user_id):
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
                     
-                    # Extract old and new values from details if they're not directly available
-                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
-                        old_val, new_val = extract_values_from_details(contribution['details'])
-                        if 'old_value' not in contribution and old_val:
-                            contribution['old_value'] = old_val
-                        if 'new_value' not in contribution and new_val:
-                            contribution['new_value'] = new_val
+                    # Make sure we have old_value and new_value fields - with improved extraction
+                    ensure_old_new_values(contribution)
                     
                     contributions.append(contribution)
             
             # Get approved parameters
             approved_params = db.child('parameters').get(token=current_user['token']).val() or {}
             for param_id, param_data in approved_params.items():
-                if param_data.get('submitted_by') == user_email:
+                if param_data.get('updated_by') == user_email:
                     contribution = param_data.copy()
                     contribution['id'] = param_id
                     contribution['status'] = 'approved'
-                    contribution['timestamp'] = contribution.get('approved_at', 0)
+                    contribution['timestamp'] = contribution.get('approved_at', 0) or contribution.get('updated_at', 0)
                     
                     # Add parameter name if not present
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
                     
-                    # Extract old and new values from details if they're not directly available
-                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
-                        old_val, new_val = extract_values_from_details(contribution['details'])
-                        if 'old_value' not in contribution and old_val:
-                            contribution['old_value'] = old_val
-                        if 'new_value' not in contribution and new_val:
-                            contribution['new_value'] = new_val
+                    # Make sure we have old_value and new_value fields - with improved extraction
+                    ensure_old_new_values(contribution)
                     
                     contributions.append(contribution)
             
@@ -664,13 +656,8 @@ def get_user_contributions(user_id):
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
                     
-                    # Extract old and new values from details if they're not directly available
-                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
-                        old_val, new_val = extract_values_from_details(contribution['details'])
-                        if 'old_value' not in contribution and old_val:
-                            contribution['old_value'] = old_val
-                        if 'new_value' not in contribution and new_val:
-                            contribution['new_value'] = new_val
+                    # Make sure we have old_value and new_value fields - with improved extraction
+                    ensure_old_new_values(contribution)
                     
                     contributions.append(contribution)
             
@@ -681,6 +668,57 @@ def get_user_contributions(user_id):
         print(f"Error retrieving user contributions: {str(e)}")
     
     return contributions
+
+def ensure_old_new_values(param_data):
+    """Ensure param_data has old_value and new_value fields by extracting from available fields.
+    
+    Args:
+        param_data (dict): Parameter data to enhance
+    """
+    # Check if old_value and new_value already exist and are not empty
+    has_old = 'old_value' in param_data and param_data['old_value']
+    has_new = 'new_value' in param_data and param_data['new_value']
+    
+    # If both exist, no need to do anything
+    if has_old and has_new:
+        return
+    
+    # Check for new-style fields first (new_details, old_details, etc.)
+    if 'new_details' in param_data and 'old_details' in param_data:
+        # Use details as the primary change value if available
+        param_data['new_value'] = param_data['new_details']
+        param_data['old_value'] = param_data['old_details']
+    elif 'new_description' in param_data and 'old_description' in param_data:
+        # Fall back to description
+        param_data['new_value'] = param_data['new_description']
+        param_data['old_value'] = param_data['old_description']
+    elif 'new_name' in param_data and 'old_name' in param_data:
+        # Last resort is name
+        param_data['new_value'] = param_data['new_name']
+        param_data['old_value'] = param_data['old_name']
+    # If we only need one of the values, try to fill it
+    elif not has_new:
+        # For new value, use these fields in priority order
+        if 'details' in param_data:
+            param_data['new_value'] = param_data['details']
+        elif 'description' in param_data:
+            param_data['new_value'] = param_data['description']
+        elif 'name' in param_data:
+            param_data['new_value'] = param_data['name']
+    
+    # Last resort - extract from details field if available
+    if (not has_old or not has_new) and 'details' in param_data:
+        old_val, new_val = extract_values_from_details(param_data['details'])
+        if not has_old and old_val:
+            param_data['old_value'] = old_val
+        if not has_new and new_val:
+            param_data['new_value'] = new_val
+    
+    # Ensure fields exist even if empty
+    if 'old_value' not in param_data:
+        param_data['old_value'] = ""
+    if 'new_value' not in param_data:
+        param_data['new_value'] = ""
 
 def extract_values_from_details(details):
     """Extract old and new values from a details string.
