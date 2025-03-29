@@ -2308,7 +2308,8 @@ Details: {self.param_details_text.toPlainText()}"""
                     
                     # Convert to list and sort by timestamp (newest first for forum style)
                     posts = []
-                    for post_id, post_data in forum_data.items():
+                    for post in forum_posts:
+                        post_data = post.to_dict()
                         posts.append(post_data)
                     
                     # Sort posts by timestamp (newest first)
