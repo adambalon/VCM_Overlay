@@ -1056,9 +1056,29 @@ class VCMOverlay(QMainWindow):
                 color: #AAAAAA;
                 border: 1px solid #222222;
                 border-radius: 6px;
-                font-family: Consolas, monospace;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                 line-height: 1.4;
                 padding: 5px;
+            }
+            QScrollBar:vertical {
+                background-color: #0D0D0D;
+                width: 14px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #333333;
+                min-height: 20px;
+                border-radius: 7px;
+                margin: 2px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #444444;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
             }
         """)
         forum_layout.addWidget(self.forum_messages)
@@ -2125,19 +2145,89 @@ Details: {self.param_details_text.toPlainText()}"""
         self.log_debug(f"Loading forum for parameter {param_id}...")
         
         if not FIREBASE_AVAILABLE or not firebase_service.get_current_user():
-            self.forum_messages.setText("Forum not available. Please login to access the forum.")
+            self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>Forum not available. Please login to access the forum.</div>")
             return
         
         try:
             # Try to fetch forum posts from Firestore
+            current_user = firebase_service.get_current_user()
+            current_user_id = current_user['uid'] if current_user else None
+            
             if firebase_service.firestore_db:
                 # Get forum collection for this parameter
                 forum_ref = firebase_service.firestore_db.collection('parameter_forums').document(param_id).collection('posts')
-                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).get()
+                forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.ASCENDING).get()  # Changed to ASCENDING for chat style
                 
                 if forum_posts and len(forum_posts) > 0:
                     # Process forum posts
-                    forum_text = ""
+                    html_content = """
+                    <style>
+                        .chat-container {
+                            display: flex;
+                            flex-direction: column;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                        }
+                        .message {
+                            max-width: 80%;
+                            margin: 4px 8px;
+                            padding: 8px 12px;
+                            border-radius: 18px;
+                            font-size: 9pt;
+                            line-height: 1.4;
+                            word-wrap: break-word;
+                        }
+                        .sent {
+                            align-self: flex-end;
+                            background-color: #0B93F6;
+                            color: white;
+                            border-bottom-right-radius: 5px;
+                        }
+                        .received {
+                            align-self: flex-start;
+                            background-color: #E5E5EA;
+                            color: black;
+                            border-bottom-left-radius: 5px;
+                        }
+                        .message-info {
+                            font-size: 7pt;
+                            margin-top: 2px;
+                            opacity: 0.7;
+                        }
+                        .sent .message-info {
+                            text-align: right;
+                            color: rgba(255, 255, 255, 0.7);
+                        }
+                        .received .message-info {
+                            color: rgba(0, 0, 0, 0.5);
+                        }
+                        .timestamp {
+                            text-align: center;
+                            color: #8e8e93;
+                            font-size: 8pt;
+                            margin: 15px 0 5px 0;
+                        }
+                        .day-divider {
+                            text-align: center;
+                            color: #8e8e93;
+                            font-size: 8pt;
+                            margin: 15px 0;
+                            position: relative;
+                        }
+                        .day-divider::before, .day-divider::after {
+                            content: "";
+                            display: inline-block;
+                            width: 40%;
+                            height: 1px;
+                            background: rgba(142, 142, 147, 0.3);
+                            vertical-align: middle;
+                            margin: 0 10px;
+                        }
+                    </style>
+                    <div class="chat-container">
+                    """
+                    
+                    last_date = None
+                    
                     for post in forum_posts:
                         post_data = post.to_dict()
                         
@@ -2149,26 +2239,46 @@ Details: {self.param_details_text.toPlainText()}"""
                         else:
                             display_name = post_data.get('user_email', 'Anonymous')
                             
+                        user_id = post_data.get('user_id', '')
                         timestamp = post_data.get('timestamp')
                         content = post_data.get('content', '')
                         
                         # Format timestamp
                         if isinstance(timestamp, datetime.datetime):
-                            timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                            current_date = timestamp.strftime("%Y-%m-%d")
+                            time_str = timestamp.strftime("%I:%M %p")
+                            
+                            # Add date divider if it's a new day
+                            if last_date != current_date:
+                                html_content += f'<div class="day-divider">{timestamp.strftime("%B %d, %Y")}</div>'
+                                last_date = current_date
                         else:
-                            timestamp_str = str(timestamp)
+                            time_str = "Unknown time"
                         
-                        # Add to forum text with better formatting
-                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {display_name}\n{'-'*50}\n{content}\n"
+                        # Determine if this message is from the current user
+                        is_current_user = user_id == current_user_id
+                        message_class = "sent" if is_current_user else "received"
+                        
+                        # Replace newlines with <br> tags
+                        content_formatted = content.replace('\n', '<br>')
+                        
+                        # Add message bubble
+                        html_content += f'''
+                        <div class="message {message_class}">
+                            {content_formatted}
+                            <div class="message-info">
+                                {display_name} • {time_str}
+                            </div>
+                        </div>
+                        '''
+                    
+                    html_content += "</div>"
                     
                     # Update forum messages
-                    if forum_text:
-                        self.forum_messages.setText(forum_text.strip())
-                        self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
-                    else:
-                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                    self.forum_messages.setHtml(html_content)
+                    self.log_debug(f"Loaded {len(forum_posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                    self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
             else:
                 # Try to fetch from Realtime Database
                 current_user = firebase_service.get_current_user()
@@ -2179,14 +2289,81 @@ Details: {self.param_details_text.toPlainText()}"""
                 
                 if forum_data:
                     # Process forum posts
-                    forum_text = ""
-                    # Convert to list and sort by timestamp (newest first)
+                    html_content = """
+                    <style>
+                        .chat-container {
+                            display: flex;
+                            flex-direction: column;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                        }
+                        .message {
+                            max-width: 80%;
+                            margin: 4px 8px;
+                            padding: 8px 12px;
+                            border-radius: 18px;
+                            font-size: 9pt;
+                            line-height: 1.4;
+                            word-wrap: break-word;
+                        }
+                        .sent {
+                            align-self: flex-end;
+                            background-color: #0B93F6;
+                            color: white;
+                            border-bottom-right-radius: 5px;
+                        }
+                        .received {
+                            align-self: flex-start;
+                            background-color: #E5E5EA;
+                            color: black;
+                            border-bottom-left-radius: 5px;
+                        }
+                        .message-info {
+                            font-size: 7pt;
+                            margin-top: 2px;
+                            opacity: 0.7;
+                        }
+                        .sent .message-info {
+                            text-align: right;
+                            color: rgba(255, 255, 255, 0.7);
+                        }
+                        .received .message-info {
+                            color: rgba(0, 0, 0, 0.5);
+                        }
+                        .timestamp {
+                            text-align: center;
+                            color: #8e8e93;
+                            font-size: 8pt;
+                            margin: 15px 0 5px 0;
+                        }
+                        .day-divider {
+                            text-align: center;
+                            color: #8e8e93;
+                            font-size: 8pt;
+                            margin: 15px 0;
+                            position: relative;
+                        }
+                        .day-divider::before, .day-divider::after {
+                            content: "";
+                            display: inline-block;
+                            width: 40%;
+                            height: 1px;
+                            background: rgba(142, 142, 147, 0.3);
+                            vertical-align: middle;
+                            margin: 0 10px;
+                        }
+                    </style>
+                    <div class="chat-container">
+                    """
+                    
+                    # Convert to list and sort by timestamp (oldest first for chat style)
                     posts = []
                     for post_id, post_data in forum_data.items():
                         posts.append(post_data)
                     
-                    # Sort posts by timestamp (newest first)
-                    posts.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+                    # Sort posts by timestamp (oldest first)
+                    posts.sort(key=lambda x: x.get('timestamp', 0))
+                    
+                    last_date = None
                     
                     for post_data in posts:
                         # Get display name (prefer screenname over email)
@@ -2197,31 +2374,51 @@ Details: {self.param_details_text.toPlainText()}"""
                         else:
                             display_name = post_data.get('user_email', 'Anonymous')
                             
+                        user_id = post_data.get('user_id', '')
                         timestamp = post_data.get('timestamp')
                         content = post_data.get('content', '')
                         
                         # Format timestamp
                         if isinstance(timestamp, (int, float)):
                             timestamp_dt = datetime.datetime.fromtimestamp(timestamp / 1000)
-                            timestamp_str = timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
+                            current_date = timestamp_dt.strftime("%Y-%m-%d")
+                            time_str = timestamp_dt.strftime("%I:%M %p")
+                            
+                            # Add date divider if it's a new day
+                            if last_date != current_date:
+                                html_content += f'<div class="day-divider">{timestamp_dt.strftime("%B %d, %Y")}</div>'
+                                last_date = current_date
                         else:
-                            timestamp_str = str(timestamp)
+                            time_str = "Unknown time"
                         
-                        # Add to forum text with better formatting
-                        forum_text += f"\n{'='*50}\n[{timestamp_str}] Posted by: {display_name}\n{'-'*50}\n{content}\n"
+                        # Determine if this message is from the current user
+                        is_current_user = user_id == current_user_id
+                        message_class = "sent" if is_current_user else "received"
+                        
+                        # Replace newlines with <br> tags
+                        content_formatted = content.replace('\n', '<br>')
+                        
+                        # Add message bubble
+                        html_content += f'''
+                        <div class="message {message_class}">
+                            {content_formatted}
+                            <div class="message-info">
+                                {display_name} • {time_str}
+                            </div>
+                        </div>
+                        '''
+                    
+                    html_content += "</div>"
                     
                     # Update forum messages
-                    if forum_text:
-                        self.forum_messages.setText(forum_text.strip())
-                        self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
-                    else:
-                        self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                    self.forum_messages.setHtml(html_content)
+                    self.log_debug(f"Loaded {len(posts)} forum posts for parameter {param_id}")
                 else:
-                    self.forum_messages.setText("No forum posts yet. Save a parameter to start the conversation.")
+                    self.forum_messages.setHtml("<div style='color:#AAAAAA;text-align:center;padding:20px;'>No forum posts yet. Save a parameter to start the conversation.</div>")
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
-            self.forum_messages.setText(f"Error loading forum posts: {str(e)}")
+            self.forum_messages.setHtml(f"<div style='color:#FF5555;text-align:center;padding:20px;'>Error loading forum posts: {str(e)}</div>")
 
     def clean_parameters_collection(self):
         """Clean up old parameters from the parameters collection"""
