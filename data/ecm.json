@@ -117,9 +117,9 @@
     "12600": {
       "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane",
       "description": "",
-      "details": "THIS IS A TEST BRUH",
+      "details": "New test",
       "added_time": "2025-03-29T03:31:30.364616",
-      "updated_time": "2025-03-29T03:52:28.010928"
+      "updated_time": "2025-03-29T04:38:21.064414"
     },
     "12598": {
       "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane, DOD",
@@ -192,6 +192,24 @@
       "description": "",
       "details": "",
       "added_time": "2025-03-29T03:51:02.684710"
+    },
+    "12624": {
+      "name": "ECT Spark Advance Correction - Add",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:12:03.185499"
+    },
+    "12601": {
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:37:49.092588"
+    },
+    "12599": {
+      "name": "Main Spark vs. Airmass vs. RPM Open Throttle, Low Octane, DOD",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T04:37:49.129808"
     }
   }
 }
