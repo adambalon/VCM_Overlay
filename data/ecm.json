@@ -117,8 +117,9 @@
     "12600": {
       "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane",
       "description": "",
-      "details": "",
-      "added_time": "2025-03-29T03:31:30.364616"
+      "details": "THIS IS A TEST BRUH",
+      "added_time": "2025-03-29T03:31:30.364616",
+      "updated_time": "2025-03-29T03:52:28.010928"
     },
     "12598": {
       "name": "Main Spark vs. Airmass vs. RPM Open Throttle, High Octane, DOD",
@@ -173,6 +174,24 @@
       "description": "",
       "details": "",
       "added_time": "2025-03-29T03:32:29.593486"
+    },
+    "12671": {
+      "name": "Idle Underspeed Spark vs. RPM Error (Coastdown)",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:45:14.890913"
+    },
+    "12634": {
+      "name": "PE/COT Spark Advance Correction (Gasoline) vs. RPM vs. EQ Ratio",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:51:02.467373"
+    },
+    "12625": {
+      "name": "ECT Spark Advance Correction - Mult",
+      "description": "",
+      "details": "",
+      "added_time": "2025-03-29T03:51:02.684710"
     }
   }
 }
