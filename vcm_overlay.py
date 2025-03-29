@@ -1057,34 +1057,43 @@ class VCMOverlay(QMainWindow):
             # User is logged in
             self.user_label.setText(f"Signed in as: {current_user.get('email', 'Unknown')}")
             self.auth_button.setText("Logout")
-            self.save_to_cloud_button.setEnabled(True)
+            if hasattr(self, 'save_to_cloud_button'):
+                self.save_to_cloud_button.setEnabled(True)
             
             # Clear parameter fields for a fresh start after login
-            self.param_id_label.setText("")
-            self.param_name_label.setText("")
-            self.param_desc_label.setText("")
-            self.param_details_text.clear()
-            self.parameter_header_label.setText("Parameter detection active")
-            self.git_status_label.setText("Ready for parameter detection")
+            if hasattr(self, 'param_id_label'):
+                self.param_id_label.setText("")
+            if hasattr(self, 'param_name_label'):
+                self.param_name_label.setText("")
+            if hasattr(self, 'param_desc_label'):
+                self.param_desc_label.setText("")
+            if hasattr(self, 'param_details_text'):
+                self.param_details_text.clear()
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setText("Parameter detection active")
+            if hasattr(self, 'git_status_label'):
+                self.git_status_label.setText("Ready for parameter detection")
             
             # Enable parameter fields
-            self.param_details_text.setReadOnly(False)
-            self.param_details_text.setStyleSheet("""
-                QTextEdit {
-                    background-color: #181818;
-                    color: #CCCCCC;
-                    border: 1px solid #222222;
-                    border-radius: 6px;
-                    font-family: Consolas, monospace;
-                    font-size: 9.5pt;
-                    padding: 5px;
-                }
-            """)
-            self.parameter_header_label.setStyleSheet("""
-                font-size: 10pt; 
-                font-weight: bold; 
-                color: #FFFFFF;
-            """)
+            if hasattr(self, 'param_details_text'):
+                self.param_details_text.setReadOnly(False)
+                self.param_details_text.setStyleSheet("""
+                    QTextEdit {
+                        background-color: #181818;
+                        color: #CCCCCC;
+                        border: 1px solid #222222;
+                        border-radius: 6px;
+                        font-family: Consolas, monospace;
+                        font-size: 9.5pt;
+                        padding: 5px;
+                    }
+                """)
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setStyleSheet("""
+                    font-size: 10pt; 
+                    font-weight: bold; 
+                    color: #FFFFFF;
+                """)
             
             # Check if the user is an admin
             is_admin = False
@@ -1101,77 +1110,45 @@ class VCMOverlay(QMainWindow):
                     user_data = db.child('users').child(current_user['uid']).get(token=current_user['token']).val()
                     is_admin = user_data and user_data.get('role') == 'admin' and user_data.get('trusted', False)
             except Exception as e:
-                self.log_debug(f"Error checking admin status: {str(e)}")
-                is_admin = False
-            
-            # Show/hide admin features based on status
-            if is_admin:
-                self.log_debug("User is an admin, showing admin features")
-                # Create admin button if it doesn't exist
-                if not hasattr(self, 'admin_button') or not self.admin_button:
-                    self.admin_button = QPushButton("Pending")
-                    self.admin_button.setStyleSheet("""
-                        QPushButton {
-                            background-color: #336633;
-                            color: #FFFFFF;
-                            border: none;
-                            padding: 3px 8px;
-                            border-radius: 4px;
-                            font-size: 8pt;
-                        }
-                        QPushButton:hover {
-                            background-color: #448844;
-                        }
-                    """)
-                    self.admin_button.clicked.connect(self.run_manage_pending)
-                    
-                    # Add to auth container layout
-                    if hasattr(self, 'auth_container') and self.auth_container:
-                        self.auth_container.layout().insertWidget(1, self.admin_button)
-                        
-                # Make sure it's visible
-                if hasattr(self, 'admin_button') and self.admin_button:
-                    self.admin_button.show()
-            else:
-                # Hide admin button if it exists
-                if hasattr(self, 'admin_button') and self.admin_button:
-                    self.admin_button.hide()
+                self.log_debug(f"Error checking user role: {str(e)}")
+                
+            # Show pending management button for admins
+            if is_admin and CHANGE_LOG_AVAILABLE:
+                self.change_log_button.setText("Manage Pending")
+                self.change_log_button.clicked.disconnect()
+                self.change_log_button.clicked.connect(self.run_manage_pending)
+            elif CHANGE_LOG_AVAILABLE:
+                self.change_log_button.setText("Changes")
+                self.change_log_button.clicked.disconnect()
+                self.change_log_button.clicked.connect(self.show_change_log)
+                
         else:
-            # No user logged in
+            # User is not logged in
             self.user_label.setText("Not signed in")
             self.auth_button.setText("Login")
-            self.save_to_cloud_button.setEnabled(False)
-            
-            # Clear parameter fields when logging out
-            self.param_id_label.setText("")
-            self.param_name_label.setText("")
-            self.param_desc_label.setText("")
-            self.param_details_text.clear()
-            self.parameter_header_label.setText("LOGIN REQUIRED")
-            self.git_status_label.setText("")
+            if hasattr(self, 'save_to_cloud_button'):
+                self.save_to_cloud_button.setEnabled(False)
             
             # Disable parameter fields
-            self.param_details_text.setReadOnly(True)
-            self.param_details_text.setStyleSheet("""
-                QTextEdit {
-                    background-color: #181818;
-                    color: #555555; /* Dimmed text color */
-                    border: 1px solid #222222;
-                    border-radius: 6px;
-                    font-family: Consolas, monospace;
-                    font-size: 9.5pt;
-                    padding: 5px;
-                }
-            """)
-            self.parameter_header_label.setStyleSheet("""
-                font-size: 10pt; 
-                font-weight: bold; 
-                color: #555555; /* Dimmed text color */
-            """)
-            
-            # Hide admin button if it exists
-            if hasattr(self, 'admin_button') and self.admin_button:
-                self.admin_button.hide()
+            if hasattr(self, 'param_details_text'):
+                self.param_details_text.setReadOnly(True)
+                self.param_details_text.setStyleSheet("""
+                    QTextEdit {
+                        background-color: #111111;
+                        color: #666666;
+                        border: 1px solid #222222;
+                        border-radius: 6px;
+                        font-family: Consolas, monospace;
+                        font-size: 9.5pt;
+                        padding: 5px;
+                    }
+                """)
+            if hasattr(self, 'parameter_header_label'):
+                self.parameter_header_label.setStyleSheet("""
+                    font-size: 10pt; 
+                    font-weight: bold; 
+                    color: #666666;
+                """)
 
     def run_manage_pending(self):
         """Open the manage pending parameters dialog"""
