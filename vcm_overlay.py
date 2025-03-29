@@ -2258,6 +2258,11 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Get status (default to pending if not set)
                         status = post_data.get('status', 'pending')
                         
+                        # Auto set admin posts to accepted
+                        is_admin = post_data.get('is_admin', False)
+                        if is_admin:
+                            status = 'accepted'
+                        
                         # Add the post to the forum
                         self.add_forum_post(display_name, full_time, content, status, is_current_user)
                     
@@ -2287,12 +2292,13 @@ Details: {self.param_details_text.toPlainText()}"""
         # Set style based on user
         border_style = ""
         if is_current_user:
-            border_style = "border-left: 3px solid #555555;"
+            border_style = "border-left: 3px solid #555555; margin-left: 0px;"
         
         post_widget.setStyleSheet(f"""
             QFrame {{
                 background-color: #1A1A1A;
                 border-radius: 4px;
+                margin-bottom: 10px;
                 {border_style}
             }}
         """)
