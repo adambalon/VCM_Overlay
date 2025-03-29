@@ -2177,55 +2177,52 @@ Details: {self.param_details_text.toPlainText()}"""
                     <head>
                         <style>
                             body {
-                                background-color: #f5f5f5;
+                                background-color: #121212;
                                 margin: 0;
                                 padding: 10px;
-                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-family: Arial, sans-serif;
                                 font-size: 13px;
-                                color: #333333;
+                                color: #DDDDDD;
                             }
                             .forum-header {
-                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
-                                color: white;
+                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
+                                color: #00AAFF;
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #1E5799;
+                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
                             }
                             .forum-wrapper {
-                                border: 1px solid #cccccc;
+                                border: 1px solid #333333;
                                 border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                background-color: white;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                background-color: #1E1E1E;
                                 margin-bottom: 15px;
                             }
                             .forum-thread {
                                 margin-bottom: 10px;
                             }
                             .post {
-                                border-bottom: 1px solid #e6e6e6;
+                                border-bottom: 1px solid #333333;
                                 padding: 0;
-                                margin: 0;
+                                margin: 0 0 10px 0;
                             }
                             .post:last-child {
                                 border-bottom: none;
+                                margin-bottom: 0;
                             }
                             .post-header {
-                                background-color: #f2f6f8;
+                                background-color: #252525;
                                 padding: 6px 10px;
                                 font-size: 12px;
-                                border-bottom: 1px solid #e6e6e6;
-                                color: #5a7f97;
+                                border-bottom: 1px solid #333333;
+                                color: #AAAAAA;
                             }
                             .post-date {
                                 float: right;
-                                color: #888888;
-                            }
-                            .post-user {
-                                font-weight: bold;
-                                color: #4273A3;
+                                color: #999999;
                             }
                             .post-content {
                                 padding: 12px 15px;
@@ -2233,49 +2230,36 @@ Details: {self.param_details_text.toPlainText()}"""
                             }
                             .post-content-wrapper {
                                 display: flex;
+                                margin-bottom: 15px;
+                                background-color: #1A1A1A;
                             }
                             .post-userinfo {
-                                background-color: #f9f9f9;
-                                border-right: 1px solid #e6e6e6;
-                                width: 150px;
+                                background-color: #1C1C1C;
+                                border-right: 1px solid #333333;
+                                width: 120px;
                                 padding: 12px;
-                                color: #555;
+                                color: #BBBBBB;
                                 font-size: 12px;
                             }
                             .post-userinfo-name {
                                 font-weight: bold;
-                                color: #4273A3;
+                                color: #00AAFF;
                                 margin-bottom: 6px;
                                 font-size: 13px;
-                            }
-                            .post-userinfo-title {
-                                color: #777;
-                                font-size: 11px;
-                                margin-bottom: 8px;
-                            }
-                            .post-userinfo-joined {
-                                font-size: 11px;
-                                margin-top: 10px;
-                                color: #888;
-                            }
-                            .post-userinfo-posts {
-                                font-size: 11px;
-                                margin-top: 5px;
-                                color: #888;
                             }
                             .post-body {
                                 padding: 15px;
                                 flex-grow: 1;
                             }
                             .current-user .post-userinfo-name {
-                                color: #B33100;
+                                color: #FF9900;
                             }
                             .current-user .post-userinfo {
-                                background-color: #FFF8E8;
+                                background-color: #232323;
                             }
                             .current-user .post-header {
-                                background-color: #FDF1D8;
-                                color: #B86D3F;
+                                background-color: #2B2B2B;
+                                color: #BBBBBB;
                             }
                         </style>
                     </head>
@@ -2325,14 +2309,10 @@ Details: {self.param_details_text.toPlainText()}"""
                         <div class="post {current_user_class}">
                             <div class="post-header">
                                 <span class="post-date">{full_time}</span>
-                                <span class="post-user">{display_name}</span>
                             </div>
                             <div class="post-content-wrapper">
                                 <div class="post-userinfo">
                                     <div class="post-userinfo-name">{display_name}</div>
-                                    <div class="post-userinfo-title">{user_title}</div>
-                                    <div class="post-userinfo-joined">Joined: {joined_date}</div>
-                                    <div class="post-userinfo-posts">Posts: {post_count}</div>
                                 </div>
                                 <div class="post-body">
                                     {content_formatted}
@@ -2359,34 +2339,34 @@ Details: {self.param_details_text.toPlainText()}"""
                     <head>
                         <style>
                             body {
-                                background-color: #f5f5f5;
+                                background-color: #121212;
                                 margin: 0;
                                 padding: 10px;
-                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-family: Arial, sans-serif;
                                 font-size: 13px;
-                                color: #333333;
+                                color: #DDDDDD;
                             }
                             .forum-header {
-                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
-                                color: white;
+                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
+                                color: #00AAFF;
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #1E5799;
+                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
                             }
                             .forum-wrapper {
-                                border: 1px solid #cccccc;
+                                border: 1px solid #333333;
                                 border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                background-color: white;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                background-color: #1E1E1E;
                                 margin-bottom: 15px;
                             }
                             .empty-message {
                                 padding: 40px 20px;
                                 text-align: center;
-                                color: #777;
+                                color: #999999;
                                 font-size: 14px;
                             }
                         </style>
@@ -2416,55 +2396,52 @@ Details: {self.param_details_text.toPlainText()}"""
                     <head>
                         <style>
                             body {
-                                background-color: #f5f5f5;
+                                background-color: #121212;
                                 margin: 0;
                                 padding: 10px;
-                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-family: Arial, sans-serif;
                                 font-size: 13px;
-                                color: #333333;
+                                color: #DDDDDD;
                             }
                             .forum-header {
-                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
-                                color: white;
+                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
+                                color: #00AAFF;
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #1E5799;
+                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
                             }
                             .forum-wrapper {
-                                border: 1px solid #cccccc;
+                                border: 1px solid #333333;
                                 border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                background-color: white;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                background-color: #1E1E1E;
                                 margin-bottom: 15px;
                             }
                             .forum-thread {
                                 margin-bottom: 10px;
                             }
                             .post {
-                                border-bottom: 1px solid #e6e6e6;
+                                border-bottom: 1px solid #333333;
                                 padding: 0;
-                                margin: 0;
+                                margin: 0 0 10px 0;
                             }
                             .post:last-child {
                                 border-bottom: none;
+                                margin-bottom: 0;
                             }
                             .post-header {
-                                background-color: #f2f6f8;
+                                background-color: #252525;
                                 padding: 6px 10px;
                                 font-size: 12px;
-                                border-bottom: 1px solid #e6e6e6;
-                                color: #5a7f97;
+                                border-bottom: 1px solid #333333;
+                                color: #AAAAAA;
                             }
                             .post-date {
                                 float: right;
-                                color: #888888;
-                            }
-                            .post-user {
-                                font-weight: bold;
-                                color: #4273A3;
+                                color: #999999;
                             }
                             .post-content {
                                 padding: 12px 15px;
@@ -2472,49 +2449,36 @@ Details: {self.param_details_text.toPlainText()}"""
                             }
                             .post-content-wrapper {
                                 display: flex;
+                                margin-bottom: 15px;
+                                background-color: #1A1A1A;
                             }
                             .post-userinfo {
-                                background-color: #f9f9f9;
-                                border-right: 1px solid #e6e6e6;
-                                width: 150px;
+                                background-color: #1C1C1C;
+                                border-right: 1px solid #333333;
+                                width: 120px;
                                 padding: 12px;
-                                color: #555;
+                                color: #BBBBBB;
                                 font-size: 12px;
                             }
                             .post-userinfo-name {
                                 font-weight: bold;
-                                color: #4273A3;
+                                color: #00AAFF;
                                 margin-bottom: 6px;
                                 font-size: 13px;
-                            }
-                            .post-userinfo-title {
-                                color: #777;
-                                font-size: 11px;
-                                margin-bottom: 8px;
-                            }
-                            .post-userinfo-joined {
-                                font-size: 11px;
-                                margin-top: 10px;
-                                color: #888;
-                            }
-                            .post-userinfo-posts {
-                                font-size: 11px;
-                                margin-top: 5px;
-                                color: #888;
                             }
                             .post-body {
                                 padding: 15px;
                                 flex-grow: 1;
                             }
                             .current-user .post-userinfo-name {
-                                color: #B33100;
+                                color: #FF9900;
                             }
                             .current-user .post-userinfo {
-                                background-color: #FFF8E8;
+                                background-color: #232323;
                             }
                             .current-user .post-header {
-                                background-color: #FDF1D8;
-                                color: #B86D3F;
+                                background-color: #2B2B2B;
+                                color: #BBBBBB;
                             }
                         </style>
                     </head>
@@ -2571,14 +2535,10 @@ Details: {self.param_details_text.toPlainText()}"""
                         <div class="post {current_user_class}">
                             <div class="post-header">
                                 <span class="post-date">{full_time}</span>
-                                <span class="post-user">{display_name}</span>
                             </div>
                             <div class="post-content-wrapper">
                                 <div class="post-userinfo">
                                     <div class="post-userinfo-name">{display_name}</div>
-                                    <div class="post-userinfo-title">{user_title}</div>
-                                    <div class="post-userinfo-joined">Joined: {joined_date}</div>
-                                    <div class="post-userinfo-posts">Posts: {post_count}</div>
                                 </div>
                                 <div class="post-body">
                                     {content_formatted}
@@ -2605,34 +2565,34 @@ Details: {self.param_details_text.toPlainText()}"""
                     <head>
                         <style>
                             body {
-                                background-color: #f5f5f5;
+                                background-color: #121212;
                                 margin: 0;
                                 padding: 10px;
-                                font-family: Tahoma, Verdana, Arial, sans-serif;
+                                font-family: Arial, sans-serif;
                                 font-size: 13px;
-                                color: #333333;
+                                color: #DDDDDD;
                             }
                             .forum-header {
-                                background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
-                                color: white;
+                                background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
+                                color: #00AAFF;
                                 padding: 8px 12px;
                                 font-weight: bold;
                                 border-radius: 5px 5px 0 0;
-                                border: 1px solid #1E5799;
+                                border: 1px solid #333333;
                                 font-size: 14px;
                                 text-shadow: 0 1px 1px rgba(0,0,0,0.3);
                             }
                             .forum-wrapper {
-                                border: 1px solid #cccccc;
+                                border: 1px solid #333333;
                                 border-radius: 5px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                background-color: white;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                background-color: #1E1E1E;
                                 margin-bottom: 15px;
                             }
                             .empty-message {
                                 padding: 40px 20px;
                                 text-align: center;
-                                color: #777;
+                                color: #999999;
                                 font-size: 14px;
                             }
                         </style>
@@ -2655,34 +2615,34 @@ Details: {self.param_details_text.toPlainText()}"""
             <head>
                 <style>
                     body {{
-                        background-color: #f5f5f5;
+                        background-color: #121212;
                         margin: 0;
                         padding: 10px;
-                        font-family: Tahoma, Verdana, Arial, sans-serif;
+                        font-family: Arial, sans-serif;
                         font-size: 13px;
-                        color: #333333;
+                        color: #DDDDDD;
                     }}
                     .forum-header {{
-                        background: linear-gradient(to bottom, #3A7FB8 0%, #1E5799 100%);
-                        color: white;
+                        background: linear-gradient(to bottom, #2A2A2A 0%, #1A1A1A 100%);
+                        color: #00AAFF;
                         padding: 8px 12px;
                         font-weight: bold;
                         border-radius: 5px 5px 0 0;
-                        border: 1px solid #1E5799;
+                        border: 1px solid #333333;
                         font-size: 14px;
                         text-shadow: 0 1px 1px rgba(0,0,0,0.3);
                     }}
                     .forum-wrapper {{
-                        border: 1px solid #cccccc;
+                        border: 1px solid #333333;
                         border-radius: 5px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        background-color: white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                        background-color: #1E1E1E;
                         margin-bottom: 15px;
                     }}
                     .error-message {{
                         padding: 20px;
                         text-align: center;
-                        color: #cc0000;
+                        color: #FF6666;
                         font-size: 14px;
                     }}
                 </style>
