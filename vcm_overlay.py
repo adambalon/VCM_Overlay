@@ -2483,7 +2483,7 @@ Details: {self.param_details_text.toPlainText()}"""
                         </div>
                     </body>
                     </html>
-                    """)
+                    """
         
         except Exception as e:
             self.log_debug(f"Error loading forum posts: {str(e)}")
