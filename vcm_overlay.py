@@ -2159,30 +2159,10 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_posts = forum_ref.order_by('timestamp', direction=firestore.Query.ASCENDING).get()  # Changed to ASCENDING for chat style
                 
                 if forum_posts and len(forum_posts) > 0:
-                    # Create a simple chat-style HTML with inline styles (more compatible with QTextEdit)
+                    # Create a simple HTML structure
                     html_content = """
                     <html>
-                    <head>
-                        <style type="text/css">
-                            body { 
-                                background-color: #000000; 
-                                margin: 0; 
-                                padding: 5px;
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                            }
-                            .chat-container {
-                                padding: 10px 5px;
-                            }
-                            .day-divider {
-                                text-align: center;
-                                margin: 15px 0;
-                                color: #aaaaaa;
-                                font-size: 11px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                    <div class="chat-container">
+                    <body style="background-color:#111111; margin:0; padding:5px; font-family:Arial, sans-serif;">
                     """
                     
                     last_date = None
@@ -2209,7 +2189,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             
                             # Add date divider if it's a new day
                             if last_date != current_date:
-                                html_content += f'<div class="day-divider">{timestamp.strftime("%B %d, %Y")}</div>'
+                                html_content += f'<div style="text-align:center; margin:10px 0; color:#999999; font-size:10px; background-color:#222222; padding:3px; border-radius:10px; display:inline-block; width:120px; margin-left:auto; margin-right:auto;">{timestamp.strftime("%B %d, %Y")}</div><br>'
                                 last_date = current_date
                         else:
                             time_str = "Unknown time"
@@ -2220,44 +2200,33 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Add message bubble with inline styles for better compatibility
+                        # Format the message
                         if is_current_user:
-                            # Sent message (blue, right-aligned)
+                            # Right-aligned blue message
                             html_content += f"""
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td width="20%"></td>
-                                    <td width="80%" align="right">
-                                        <div style="display: inline-block; background-color: #0B93F6; color: white; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-right: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                                            {content_formatted}
-                                            <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 5px; text-align: right;">
-                                                {display_name} • {time_str}
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div style="margin-bottom:12px; text-align:right;">
+                                <div style="display:inline-block; background-color:#0B93F6; color:white; padding:10px; max-width:70%; text-align:left; border-radius:15px; font-size:12px; margin-right:5px;">
+                                    {content_formatted}
+                                    <div style="font-size:9px; color:rgba(255,255,255,0.7); margin-top:4px; text-align:right;">
+                                        {display_name} • {time_str}
+                                    </div>
+                                </div>
+                            </div>
                             """
                         else:
-                            # Received message (gray, left-aligned)
+                            # Left-aligned gray message
                             html_content += f"""
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td width="80%">
-                                        <div style="display: inline-block; background-color: #E5E5EA; color: black; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-left: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                                            {content_formatted}
-                                            <div style="font-size: 9px; color: rgba(0,0,0,0.6); margin-top: 5px;">
-                                                {display_name} • {time_str}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td width="20%"></td>
-                                </tr>
-                            </table>
+                            <div style="margin-bottom:12px; text-align:left;">
+                                <div style="display:inline-block; background-color:#E5E5EA; color:black; padding:10px; max-width:70%; text-align:left; border-radius:15px; font-size:12px; margin-left:5px;">
+                                    {content_formatted}
+                                    <div style="font-size:9px; color:rgba(0,0,0,0.6); margin-top:4px;">
+                                        {display_name} • {time_str}
+                                    </div>
+                                </div>
+                            </div>
                             """
                     
                     html_content += """
-                    </div>
                     </body>
                     </html>
                     """
@@ -2278,30 +2247,10 @@ Details: {self.param_details_text.toPlainText()}"""
                 forum_data = db.child('parameter_forums').child(param_id).get(token=current_user['token']).val()
                 
                 if forum_data:
-                    # Create a simple chat-style HTML with inline styles (more compatible with QTextEdit)
+                    # Create a simple HTML structure
                     html_content = """
                     <html>
-                    <head>
-                        <style type="text/css">
-                            body { 
-                                background-color: #000000; 
-                                margin: 0; 
-                                padding: 5px;
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                            }
-                            .chat-container {
-                                padding: 10px 5px;
-                            }
-                            .day-divider {
-                                text-align: center;
-                                margin: 15px 0;
-                                color: #aaaaaa;
-                                font-size: 11px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                    <div class="chat-container">
+                    <body style="background-color:#111111; margin:0; padding:5px; font-family:Arial, sans-serif;">
                     """
                     
                     # Convert to list and sort by timestamp (oldest first for chat style)
@@ -2335,7 +2284,7 @@ Details: {self.param_details_text.toPlainText()}"""
                             
                             # Add date divider if it's a new day
                             if last_date != current_date:
-                                html_content += f'<div class="day-divider">{timestamp_dt.strftime("%B %d, %Y")}</div>'
+                                html_content += f'<div style="text-align:center; margin:10px 0; color:#999999; font-size:10px; background-color:#222222; padding:3px; border-radius:10px; display:inline-block; width:120px; margin-left:auto; margin-right:auto;">{timestamp_dt.strftime("%B %d, %Y")}</div><br>'
                                 last_date = current_date
                         else:
                             time_str = "Unknown time"
@@ -2346,44 +2295,33 @@ Details: {self.param_details_text.toPlainText()}"""
                         # Replace newlines with <br> tags
                         content_formatted = content.replace('\n', '<br>')
                         
-                        # Add message bubble with inline styles for better compatibility
+                        # Format the message
                         if is_current_user:
-                            # Sent message (blue, right-aligned)
+                            # Right-aligned blue message
                             html_content += f"""
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td width="20%"></td>
-                                    <td width="80%" align="right">
-                                        <div style="display: inline-block; background-color: #0B93F6; color: white; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-right: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                                            {content_formatted}
-                                            <div style="font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 5px; text-align: right;">
-                                                {display_name} • {time_str}
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div style="margin-bottom:12px; text-align:right;">
+                                <div style="display:inline-block; background-color:#0B93F6; color:white; padding:10px; max-width:70%; text-align:left; border-radius:15px; font-size:12px; margin-right:5px;">
+                                    {content_formatted}
+                                    <div style="font-size:9px; color:rgba(255,255,255,0.7); margin-top:4px; text-align:right;">
+                                        {display_name} • {time_str}
+                                    </div>
+                                </div>
+                            </div>
                             """
                         else:
-                            # Received message (gray, left-aligned)
+                            # Left-aligned gray message
                             html_content += f"""
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td width="80%">
-                                        <div style="display: inline-block; background-color: #E5E5EA; color: black; border-radius: 18px; padding: 12px 16px; max-width: 80%; text-align: left; font-size: 13px; margin-left: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                                            {content_formatted}
-                                            <div style="font-size: 9px; color: rgba(0,0,0,0.6); margin-top: 5px;">
-                                                {display_name} • {time_str}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td width="20%"></td>
-                                </tr>
-                            </table>
+                            <div style="margin-bottom:12px; text-align:left;">
+                                <div style="display:inline-block; background-color:#E5E5EA; color:black; padding:10px; max-width:70%; text-align:left; border-radius:15px; font-size:12px; margin-left:5px;">
+                                    {content_formatted}
+                                    <div style="font-size:9px; color:rgba(0,0,0,0.6); margin-top:4px;">
+                                        {display_name} • {time_str}
+                                    </div>
+                                </div>
+                            </div>
                             """
                     
                     html_content += """
-                    </div>
                     </body>
                     </html>
                     """
