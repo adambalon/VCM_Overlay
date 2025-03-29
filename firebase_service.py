@@ -472,30 +472,23 @@ def get_parameter_from_firebase(param_id):
         return False, f"Error retrieving parameter: {str(e)}", None
 
 def get_user_contributions(user_id):
-    """Get all contributions made by a specific user.
+    """Get all contributions (pending, approved, rejected) for a specific user.
     
     Args:
-        user_id (str): User ID to get contributions for
+        user_id (str): The user ID to retrieve contributions for.
         
     Returns:
-        list: List of contributions (pending, approved, rejected)
+        list: A list of contribution dictionaries.
     """
-    if not firebase:
-        print("Firebase is not initialized")
+    if not current_user or (not firestore_db and not db_instance):
         return []
-    
-    if not current_user:
-        print("You must be signed in to retrieve contributions")
-        return []
-    
+        
     contributions = []
     
     try:
+        # Use Firestore if available
         if firestore_db:
-            # Use Firestore
-            print(f"Retrieving contributions for user {user_id} from Firestore...")
-            
-            # Get user email first
+            # First get user email from Firestore
             user_doc = firestore_db.collection('users').document(user_id).get()
             user_email = user_doc.to_dict().get('email') if user_doc.exists else None
             
@@ -518,6 +511,14 @@ def get_user_contributions(user_id):
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
                 
+                # Extract old and new values from details if they're not directly available
+                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
+                    old_val, new_val = extract_values_from_details(param_data['details'])
+                    if 'old_value' not in param_data and old_val:
+                        param_data['old_value'] = old_val
+                    if 'new_value' not in param_data and new_val:
+                        param_data['new_value'] = new_val
+                
                 contributions.append(param_data)
             
             # Get approved parameters
@@ -535,6 +536,14 @@ def get_user_contributions(user_id):
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
                 
+                # Extract old and new values from details if they're not directly available
+                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
+                    old_val, new_val = extract_values_from_details(param_data['details'])
+                    if 'old_value' not in param_data and old_val:
+                        param_data['old_value'] = old_val
+                    if 'new_value' not in param_data and new_val:
+                        param_data['new_value'] = new_val
+                
                 contributions.append(param_data)
             
             # Get rejected parameters (stored in a separate collection)
@@ -551,6 +560,14 @@ def get_user_contributions(user_id):
                 # Add parameter name if not present
                 if 'name' in param_data and 'parameter_name' not in param_data:
                     param_data['parameter_name'] = param_data['name']
+                
+                # Extract old and new values from details if they're not directly available
+                if ('old_value' not in param_data or 'new_value' not in param_data) and 'details' in param_data:
+                    old_val, new_val = extract_values_from_details(param_data['details'])
+                    if 'old_value' not in param_data and old_val:
+                        param_data['old_value'] = old_val
+                    if 'new_value' not in param_data and new_val:
+                        param_data['new_value'] = new_val
                 
                 contributions.append(param_data)
             
@@ -582,6 +599,14 @@ def get_user_contributions(user_id):
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
                     
+                    # Extract old and new values from details if they're not directly available
+                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
+                        old_val, new_val = extract_values_from_details(contribution['details'])
+                        if 'old_value' not in contribution and old_val:
+                            contribution['old_value'] = old_val
+                        if 'new_value' not in contribution and new_val:
+                            contribution['new_value'] = new_val
+                    
                     contributions.append(contribution)
             
             # Get approved parameters
@@ -596,6 +621,14 @@ def get_user_contributions(user_id):
                     # Add parameter name if not present
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
+                    
+                    # Extract old and new values from details if they're not directly available
+                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
+                        old_val, new_val = extract_values_from_details(contribution['details'])
+                        if 'old_value' not in contribution and old_val:
+                            contribution['old_value'] = old_val
+                        if 'new_value' not in contribution and new_val:
+                            contribution['new_value'] = new_val
                     
                     contributions.append(contribution)
             
@@ -612,6 +645,14 @@ def get_user_contributions(user_id):
                     if 'name' in contribution and 'parameter_name' not in contribution:
                         contribution['parameter_name'] = contribution['name']
                     
+                    # Extract old and new values from details if they're not directly available
+                    if ('old_value' not in contribution or 'new_value' not in contribution) and 'details' in contribution:
+                        old_val, new_val = extract_values_from_details(contribution['details'])
+                        if 'old_value' not in contribution and old_val:
+                            contribution['old_value'] = old_val
+                        if 'new_value' not in contribution and new_val:
+                            contribution['new_value'] = new_val
+                    
                     contributions.append(contribution)
             
             # Sort by timestamp, newest first
@@ -621,6 +662,69 @@ def get_user_contributions(user_id):
         print(f"Error retrieving user contributions: {str(e)}")
     
     return contributions
+
+def extract_values_from_details(details):
+    """Extract old and new values from a details string.
+    
+    Args:
+        details (str): The details text to parse
+        
+    Returns:
+        tuple: (old_value, new_value)
+    """
+    if not details or not isinstance(details, str):
+        return None, None
+    
+    old_value = None
+    new_value = None
+    
+    # Common patterns to look for:
+    # Option 1: "Old Value: X, New Value: Y"
+    if "Old Value:" in details and "New Value:" in details:
+        try:
+            split_old = details.split("Old Value:", 1)[1]
+            old_part = split_old.split("New Value:", 1)[0].strip()
+            if old_part.endswith(","):
+                old_part = old_part[:-1].strip()
+            old_value = old_part
+            
+            new_part = split_old.split("New Value:", 1)[1].strip()
+            new_value = new_part
+        except:
+            pass
+    
+    # Option 2: "Changed from X to Y"
+    elif "Changed from" in details and "to" in details:
+        try:
+            split_changed = details.split("Changed from", 1)[1]
+            old_part = split_changed.split("to", 1)[0].strip()
+            if old_part.endswith(","):
+                old_part = old_part[:-1].strip()
+            old_value = old_part
+            
+            new_part = split_changed.split("to", 1)[1].strip()
+            new_value = new_part
+        except:
+            pass
+    
+    # Option 3: Try to extract from a detailed formatted text
+    elif ":" in details:
+        try:
+            lines = details.split("\n")
+            for i, line in enumerate(lines):
+                if ":" in line and i < len(lines) - 1:
+                    # Check if the next line might be a value
+                    potential_old = lines[i+1].strip()
+                    # And check if there's another line that might be new value
+                    if i < len(lines) - 2 and lines[i+2].strip() and not ":" in lines[i+2]:
+                        potential_new = lines[i+2].strip()
+                        old_value = potential_old
+                        new_value = potential_new
+                        break
+        except:
+            pass
+    
+    return old_value, new_value
 
 # Initialize Firebase when module is imported
 initialize() 
