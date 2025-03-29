@@ -1067,7 +1067,7 @@ class VCMOverlay(QMainWindow):
         self.forum_container.setObjectName("forumContainer")
         self.forum_container.setStyleSheet("""
             #forumContainer {
-                background-color: #000000;
+                background-color: #121212;
                 border: 1px solid #222222;
                 border-radius: 8px;
                 margin-top: 10px;
@@ -1107,21 +1107,21 @@ class VCMOverlay(QMainWindow):
         self.forum_scroll_area.setMinimumHeight(150)
         self.forum_scroll_area.setStyleSheet("""
             QScrollArea {
-                background-color: #000000;
+                background-color: #121212;
                 border: none;
             }
             QScrollBar:vertical {
-                background: #000000;
+                background: #121212;
                 width: 10px;
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background: #3D6A99;
+                background: #555555;
                 min-height: 20px;
                 border-radius: 5px;
             }
             QScrollBar::handle:vertical:hover {
-                background: #4D7AAA;
+                background: #666666;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -1130,7 +1130,7 @@ class VCMOverlay(QMainWindow):
         
         # Create a widget to hold all forum posts
         self.forum_posts_container = QWidget()
-        self.forum_posts_container.setStyleSheet("background-color: #000000;")
+        self.forum_posts_container.setStyleSheet("background-color: #121212;")
         self.forum_posts_layout = QVBoxLayout(self.forum_posts_container)
         self.forum_posts_layout.setContentsMargins(10, 10, 10, 10)
         self.forum_posts_layout.setSpacing(16)  # Space between posts
@@ -2140,12 +2140,14 @@ Details: {self.param_details_text.toPlainText()}"""
             
             # Get the user's screenname from Firestore
             screenname = None
+            is_admin = False
             try:
                 if firebase_service.firestore_db:
                     user_doc = firebase_service.firestore_db.collection('users').document(current_user['uid']).get()
                     if user_doc.exists:
                         user_data = user_doc.to_dict()
                         screenname = user_data.get('screenname')
+                        is_admin = user_data.get('is_admin', False)
             except Exception as e:
                 self.log_debug(f"Error getting user screenname: {str(e)}")
             
@@ -2161,7 +2163,8 @@ Details: {self.param_details_text.toPlainText()}"""
                 'content': content,
                 'param_id': param_id,
                 'timestamp': datetime.datetime.now(),
-                'status': 'pending'  # Default status for new posts
+                'status': 'accepted' if is_admin else 'pending',  # Auto-approve admin posts
+                'is_admin': is_admin  # Store admin status
             }
             
             # Save to Firestore
@@ -2284,12 +2287,12 @@ Details: {self.param_details_text.toPlainText()}"""
         # Set style based on user
         border_style = ""
         if is_current_user:
-            border_style = "border-left: 3px solid #4D7AAA;"
+            border_style = "border-left: 3px solid #555555;"
         
         post_widget.setStyleSheet(f"""
             QFrame {{
-                background-color: #1A1E2E;
-                border-radius: 6px;
+                background-color: #1A1A1A;
+                border-radius: 4px;
                 {border_style}
             }}
         """)
@@ -2302,41 +2305,34 @@ Details: {self.param_details_text.toPlainText()}"""
         # Create header widget
         header_widget = QWidget()
         header_widget.setStyleSheet("""
-            background-color: #232840;
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
+            background-color: #222222;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
         """)
         header_layout = QHBoxLayout(header_widget)
         header_layout.setContentsMargins(15, 12, 15, 12)
         
-        # Username initials for avatar
-        initials = ""
-        if username:
-            parts = username.split()
-            if len(parts) >= 2:
-                initials = (parts[0][0] + parts[-1][0]).upper()
-            else:
-                initials = username[0].upper() if username else "?"
-                
-        # Create avatar label
-        avatar_label = QLabel(initials)
-        avatar_size = 32
-        avatar_label.setFixedSize(avatar_size, avatar_size)
-        avatar_label.setAlignment(Qt.AlignCenter)
-        
-        # Set avatar style based on user
-        avatar_bg = "#2A324D"
-        avatar_color = "#FFFFFF"
-        if is_current_user:
-            avatar_bg = "#3D6A99"
-            
-        avatar_label.setStyleSheet(f"""
-            background-color: {avatar_bg};
-            color: {avatar_color};
-            border-radius: {avatar_size // 2}px;
-            font-weight: bold;
-            font-size: 14px;
-        """)
+        # Check if this is an admin post and format accordingly
+        is_admin = False
+        try:
+            # Get current user from Firebase
+            current_user = firebase_service.get_current_user()
+            if current_user:
+                # Try to get user data from Firestore
+                if username and firebase_service.firestore_db:
+                    # Get users matching the username
+                    users_ref = firebase_service.firestore_db.collection('users')
+                    # Try to find by screenname first
+                    users = users_ref.where('screenname', '==', username).get()
+                    if not users:
+                        # Try by email if screenname doesn't match
+                        users = users_ref.where('email', '==', username).get()
+                    
+                    if users:
+                        user_data = users[0].to_dict()
+                        is_admin = user_data.get('is_admin', False)
+        except Exception as e:
+            self.log_debug(f"Error checking admin status: {str(e)}")
         
         # Create user info container
         user_info = QWidget()
@@ -2344,42 +2340,60 @@ Details: {self.param_details_text.toPlainText()}"""
         user_layout.setContentsMargins(0, 0, 0, 0)
         user_layout.setSpacing(2)
         
-        # Add username and timestamp
-        username_label = QLabel(username)
+        # Add username with role
+        username_text = username
+        if is_admin:
+            username_text += " [Admin]"
+        
+        username_label = QLabel(username_text)
         username_label.setStyleSheet("""
             color: #FFFFFF;
             font-weight: bold;
             font-size: 13px;
         """)
         
-        timestamp_label = QLabel(timestamp)
+        # Fix timestamp formatting and display
+        try:
+            if timestamp and "Unknown time" not in timestamp:
+                timestamp_label = QLabel(timestamp)
+            else:
+                # Create a timestamp in the correct format since the provided one is invalid
+                current_time = datetime.datetime.now()
+                formatted_time = current_time.strftime("%b %d, %Y at %I:%M %p").replace(' 0', ' ').lower()
+                timestamp_label = QLabel(formatted_time)
+        except:
+            # Fallback to current time if there's any error
+            current_time = datetime.datetime.now()
+            formatted_time = current_time.strftime("%b %d, %Y at %I:%M %p").replace(' 0', ' ').lower()
+            timestamp_label = QLabel(formatted_time)
+            
         timestamp_label.setStyleSheet("""
-            color: #8D96B5;
+            color: #999999;
             font-size: 11px;
         """)
         
         user_layout.addWidget(username_label)
         user_layout.addWidget(timestamp_label)
         
-        # Status chip in header
+        # Status chip in header - use neutral grays instead of colorful chips
         status_chip = QLabel(status.upper())
         status_chip.setAlignment(Qt.AlignCenter)
         
         # Set status style
-        status_bg = "#2E3450"  # Default for pending
-        status_color = "#8D96B5"
+        status_bg = "#2E2E2E"  # Default for pending
+        status_color = "#AAAAAA"
         
         if status.lower() == "accepted":
-            status_bg = "#1A3A2A"
-            status_color = "#4CAF50"
+            status_bg = "#333333"
+            status_color = "#FFFFFF"
         elif status.lower() == "rejected":
-            status_bg = "#3A1A1A"
-            status_color = "#F44336"
+            status_bg = "#3A2A2A"
+            status_color = "#CCCCCC"
             
         status_chip.setStyleSheet(f"""
             background-color: {status_bg};
             color: {status_color};
-            border-radius: 10px;
+            border-radius: 4px;
             padding: 3px 8px;
             font-size: 10px;
             font-weight: bold;
@@ -2389,7 +2403,6 @@ Details: {self.param_details_text.toPlainText()}"""
         status_chip.setMinimumWidth(70)
         
         # Add widgets to header
-        header_layout.addWidget(avatar_label)
         header_layout.addWidget(user_info, 1)
         header_layout.addWidget(status_chip)
         
@@ -2399,11 +2412,11 @@ Details: {self.param_details_text.toPlainText()}"""
         content_widget.setTextInteractionFlags(Qt.TextSelectableByMouse)
         content_widget.setCursor(Qt.IBeamCursor)
         content_widget.setStyleSheet("""
-            color: #D8DEF1;
+            color: #DDDDDD;
             font-size: 13px;
             line-height: 1.5;
             padding: 15px;
-            background-color: #1A1E2E;
+            background-color: #1A1A1A;
         """)
         content_widget.setTextFormat(Qt.RichText)
         
